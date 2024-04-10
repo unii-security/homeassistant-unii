@@ -16,7 +16,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import DOMAIN, UNiiCoordinator
-from .unii import UNiiInputState, UNiiInputStatusRecord
+from .unii import UNiiCommand, UNiiInputState, UNiiInputStatusRecord
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ async def async_setup_entry(
             None,
             UNiiInputState.DISABLED,
         ]:
-            name = f"Input {number}"
+            name = f"Input {number} (binary)"
             if unii_input.name is not None:
                 name = unii_input.name
             entity_description = BinarySensorEntityDescription(
@@ -91,14 +91,33 @@ class UNiiBinarySensor(CoordinatorEntity, BinarySensorEntity):
 
         self.async_write_ha_state()
 
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        if not self._attr_available:
+            return self._attr_available
+
+        return self.coordinator.last_update_success
+
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
 
-        if self.coordinator.unii.connected:
-            self._attr_available = True
-        else:
+        if not self.coordinator.unii.connected:
             self._attr_available = False
+
+        if self.coordinator.data is None:
+            return
+
+        command = self.coordinator.data.get("command")
+
+        if command == UNiiCommand.NORMAL_DISCONNECT:
+            self._attr_available = False
+        elif command in [
+            UNiiCommand.CONNECTION_REQUEST_RESPONSE,
+            UNiiCommand.POLL_ALIVE_RESPONSE,
+        ]:
+            self._attr_available = True
 
         self.async_write_ha_state()
 
@@ -124,10 +143,26 @@ class UNiiOnlineBinarySensor(UNiiBinarySensor):
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
 
-        if self.coordinator.unii.connected:
-            self._attr_is_on = True
-        else:
+        if not self.coordinator.unii.connected:
             self._attr_is_on = False
+
+        if self.coordinator.data is None:
+            return
+
+        command = self.coordinator.data.get("command")
+
+        _LOGGER.debug("Command: %s", command)
+
+        if (
+            not self.coordinator.unii.connected
+            or command == UNiiCommand.NORMAL_DISCONNECT
+        ):
+            self._attr_is_on = False
+        if self.coordinator.unii.connected or command in [
+            UNiiCommand.CONNECTION_REQUEST_RESPONSE,
+            UNiiCommand.POLL_ALIVE_RESPONSE,
+        ]:
+            self._attr_is_on = True
 
         self.async_write_ha_state()
 
@@ -149,36 +184,57 @@ class UNiiInputBinarySensor(UNiiBinarySensor):
 
         self.input_id = input_id
 
+    def _handle_input_status(self, input_status: UNiiInputStatusRecord):
+        if input_status.status == UNiiInputState.DISABLED or input_status.supervision:
+            self._attr_available = False
+        else:
+            if input_status.status == UNiiInputState.INPUT_OK:
+                self._attr_is_on = False
+                self._attr_extra_state_attributes["alarm_type"] = "none"
+            elif input_status.bypassed is True:
+                self._attr_is_on = True
+                self._attr_extra_state_attributes["alarm_type"] = "none"
+            elif input_status.status == UNiiInputState.ALARM:
+                self._attr_is_on = True
+                self._attr_extra_state_attributes["alarm_type"] = "alarm"
+            elif input_status.status == UNiiInputState.TAMPER:
+                self._attr_is_on = True
+                self._attr_extra_state_attributes["alarm_type"] = "tamper"
+            elif input_status == UNiiInputState.MASKING:
+                self._attr_is_on = True
+                self._attr_extra_state_attributes["alarm_type"] = "masking"
+
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
 
-        if self.coordinator.unii.connected:
-            input_status: UNiiInputStatusRecord = self.coordinator.unii.inputs[
+        if not self.coordinator.unii.connected:
+            self._attr_available = False
+        else:
+            input_status: UNiiInputStatusRecord = self.coordinator.unii.inputs.get(
                 self.input_id
-            ]
+            )
 
-            if (
-                input_status.status == UNiiInputState.DISABLED
-                or input_status.supervision
-            ):
-                self._attr_available = False
-            else:
-                if input_status.status == UNiiInputState.INPUT_OK:
-                    self._attr_is_on = False
-                    self._attr_extra_state_attributes["alarm_type"] = "none"
-                elif input_status.bypassed is True:
-                    self._attr_is_on = True
-                    self._attr_extra_state_attributes["alarm_type"] = "none"
-                elif input_status.status == UNiiInputState.ALARM:
-                    self._attr_is_on = True
-                    self._attr_extra_state_attributes["alarm_type"] = "alarm"
-                elif input_status.status == UNiiInputState.TAMPER:
-                    self._attr_is_on = True
-                    self._attr_extra_state_attributes["alarm_type"] = "tamper"
-                elif input_status == UNiiInputState.MASKING:
-                    self._attr_is_on = True
-                    self._attr_extra_state_attributes["alarm_type"] = "masking"
+            self._handle_input_status(input_status)
+
+        self.async_write_ha_state()
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
+
+        super()._handle_coordinator_update()
+
+        if self.coordinator.data is None:
+            return
+
+        command = self.coordinator.data.get("command")
+        data = self.coordinator.data.get("data")
+
+        if command == UNiiCommand.EVENT_OCCURRED:
+            # ToDo
+            pass
+        elif command == UNiiCommand.INPUT_STATUS_CHANGED:
+            input_status: UNiiInputStatusRecord = data.get(self.input_id)
+            self._handle_input_status(input_status)
+
+        self.async_write_ha_state()
