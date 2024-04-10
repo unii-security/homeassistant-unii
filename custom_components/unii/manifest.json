@@ -1,0 +1,17 @@
+{
+  "domain": "unii",
+  "name": "Alphatronics UNii",
+  "codeowners": [
+    "@unii-security",
+    "@rrooggiieerr"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/unii-security/homeassistant-unii",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/unii-security/homeassistant-unii/issues",
+  "loggers": [
+    "unii"
+  ],
+  "version": "0.0.0.1"
+}
