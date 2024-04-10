@@ -8,7 +8,7 @@
             "unknown": "Unexpected error"
         },
         "step": {
-            "setup_manager": {
+            "setup_local": {
                 "title": "Alphatronics UNii",
                 "data": {
                     "host": "Host",
