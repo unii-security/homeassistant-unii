@@ -77,7 +77,7 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="setup_local",
-            data_schema=self.MALOCAL_SCHEMACHEMA,
+            data_schema=self.LOCAL_SCHEMA,
             errors=errors,
         )
 
