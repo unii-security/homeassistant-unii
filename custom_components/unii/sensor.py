@@ -167,11 +167,13 @@ class UNiiInputSensor(UNiiSensor):
         command = self.coordinator.data.get("command")
         data = self.coordinator.data.get("data")
 
-        if command == UNiiCommand.EVENT_OCCURRED:
+        if command == UNiiCommand.EVENT_OCCURRED and data.input_id == self.input_id:
             # ToDo
             pass
-        elif command == UNiiCommand.INPUT_STATUS_CHANGED:
+        elif command == UNiiCommand.INPUT_STATUS_CHANGED and self.input_id in data:
             input_status: UNiiInputStatusRecord = data.get(self.input_id)
             self._handle_input_status(input_status)
+        else:
+            return
 
         self.async_write_ha_state()
