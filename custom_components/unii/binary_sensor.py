@@ -151,8 +151,6 @@ class UNiiOnlineBinarySensor(UNiiBinarySensor):
 
         command = self.coordinator.data.get("command")
 
-        _LOGGER.debug("Command: %s", command)
-
         if (
             not self.coordinator.unii.connected
             or command == UNiiCommand.NORMAL_DISCONNECT
@@ -235,6 +233,8 @@ class UNiiInputBinarySensor(UNiiBinarySensor):
             pass
         elif command == UNiiCommand.INPUT_STATUS_CHANGED and self.input_id in data:
             input_status: UNiiInputStatusRecord = data.get(self.input_id)
+            if self.input_id == 1:
+                _LOGGER.debug("Input Status: %s", input_status)
             self._handle_input_status(input_status)
         else:
             return
