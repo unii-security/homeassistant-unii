@@ -83,7 +83,7 @@ class UNiiCoordinator(DataUpdateCoordinator):
         """Callback to be called by UNii library whenever an event occures."""
         _LOGGER.debug("Event Occurred: %s, %s", command, data)
 
-        self.async_set_updated_data({command: command, data: data})
+        self.async_set_updated_data({"command": command, "data": data})
 
         # For when events are going to be implemented
         # event_data = {}
