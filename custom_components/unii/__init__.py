@@ -81,7 +81,6 @@ class UNiiCoordinator(DataUpdateCoordinator):
     @callback
     def event_occurred_callback(self, command: UNiiCommand, data: UNiiData):
         """Callback to be called by UNii library whenever an event occures."""
-        _LOGGER.debug("Event Occurred: %s, %s", command, data)
 
         self.async_set_updated_data({"command": command, "data": data})
 
@@ -100,12 +99,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     conf_type = CONF_TYPE_LOCAL
     if CONF_TYPE in entry.data:
         conf_type = entry.data[CONF_TYPE]
-    _LOGGER.debug("Config type: %s", conf_type)
 
     if conf_type == CONF_TYPE_LOCAL:
         host = entry.data[CONF_HOST]
         port = entry.data[CONF_PORT]
-        _LOGGER.debug("Host: %s", host)
         unii = UNiiLocal(host, port, entry.data[CONF_SHARED_KEY])
 
         # Open the connection.
@@ -135,7 +132,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    _LOGGER.debug("async_unload_entry")
     coordinator: UNiiCoordinator = hass.data[DOMAIN][entry.entry_id]
     await coordinator.async_disconnect()
 
