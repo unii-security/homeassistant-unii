@@ -38,24 +38,25 @@ async def async_setup_entry(
     )
     entities.append(UNiiOnlineBinarySensor(coordinator, entity_description))
 
-    for number, unii_input in coordinator.unii.inputs.items():
-        if "status" in unii_input and unii_input.status not in [
-            None,
-            UNiiInputState.DISABLED,
-        ]:
-            name = f"Input {number} (binary)"
-            if unii_input.name is not None:
-                name = unii_input.name
-            entity_description = BinarySensorEntityDescription(
-                key=f"input-binary{number}",
-                name=name,
-                device_class=BinarySensorDeviceClass.TAMPER,
-            )
-            entities.append(
-                UNiiInputBinarySensor(
-                    coordinator, entity_description, unii_input.number
-                )
-            )
+    # Enum sensors are selected over Binary sensors to represent inputs.
+    # for number, unii_input in coordinator.unii.inputs.items():
+    #     if "status" in unii_input and unii_input.status not in [
+    #         None,
+    #         UNiiInputState.DISABLED,
+    #     ]:
+    #         name = f"Input {number} (binary)"
+    #         if unii_input.name is not None:
+    #             name = unii_input.name
+    #         entity_description = BinarySensorEntityDescription(
+    #             key=f"input-binary{number}",
+    #             name=name,
+    #             device_class=BinarySensorDeviceClass.TAMPER,
+    #         )
+    #         entities.append(
+    #             UNiiInputBinarySensor(
+    #                 coordinator, entity_description, unii_input.number
+    #             )
+    #         )
 
     async_add_entities(entities)
 
