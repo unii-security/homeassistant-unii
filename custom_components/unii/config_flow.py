@@ -108,7 +108,6 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 shared_key.append(0x20)
             
             shared_key = shared_key.encode()
-            _LOGGER.debug("Shared Key: %s", shared_key.hex())
 
         unii = UNiiLocal(host, port, shared_key)
 
