@@ -99,6 +99,16 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # ToDo: Validate the shared key?
         if shared_key is not None and shared_key.strip() == "":
             shared_key = None
+        else:
+            if len(shared_key) > 16:
+                shared_key = shared_key[:16]
+
+            # If the shared key is shorter than 16 bytes it's padded with spaces (0x20).
+            while len(shared_key) < 16:
+                shared_key.append(0x20)
+            
+            shared_key = shared_key.encode()
+            _LOGGER.debug("Shared Key: %s", shared_key.hex())
 
         unii = UNiiLocal(host, port, shared_key)
 
@@ -122,5 +132,5 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_TYPE: CONF_TYPE_LOCAL,
             CONF_HOST: host,
             CONF_PORT: port,
-            CONF_SHARED_KEY: shared_key,
+            CONF_SHARED_KEY: shared_key.hex(),
         }
