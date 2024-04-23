@@ -106,7 +106,7 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # If the shared key is shorter than 16 bytes it's padded with spaces (0x20).
             while len(shared_key) < 16:
                 shared_key.append(0x20)
-            
+
             shared_key = shared_key.encode()
 
         unii = UNiiLocal(host, port, shared_key)
