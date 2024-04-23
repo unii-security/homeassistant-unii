@@ -17,5 +17,25 @@
                 }
             }
         }
+    },
+    "entity": {
+    	"sensor": {
+    		"input": {
+    			"state": {
+    				"clear": "Clear",
+    				"alarm": "Alarm",
+    				"tamper": "Tamper",
+    				"masking": "Masking",
+    				"bypassed": "Bypassed"
+    			}
+    		},
+    		"section": {
+	    		"state": {
+		    		"armed": "Armed",
+		    		"disarmed": "Disarmed",
+		    		"alarm": "Alarm"
+	    		}
+    		}
+    	}
     }
 }

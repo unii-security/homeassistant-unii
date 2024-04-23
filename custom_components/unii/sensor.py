@@ -131,6 +131,7 @@ class UNiiInputSensor(UNiiSensor):
 
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_options = ["clear", "alarm", "tamper", "masking", "bypassed"]
+    _attr_translation_key = "input"
 
     def __init__(
         self,
@@ -202,6 +203,7 @@ class UNiiSectionSensor(UNiiSensor):
 
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_options = ["armed", "disarmed", "alarm"]
+    _attr_translation_key = "section"
 
     def __init__(
         self,
