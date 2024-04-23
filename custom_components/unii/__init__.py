@@ -80,7 +80,7 @@ class UNiiCoordinator(DataUpdateCoordinator):
 
     @callback
     def event_occurred_callback(self, command: UNiiCommand, data: UNiiData):
-        """Callback to be called by UNii library whenever an event occures."""
+        """Callback to be called by UNii library whenever an event occurs."""
 
         self.async_set_updated_data({"command": command, "data": data})
 
