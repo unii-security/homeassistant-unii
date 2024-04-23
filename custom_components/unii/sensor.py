@@ -15,7 +15,13 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import DOMAIN, UNiiCoordinator
-from .unii import UNiiCommand, UNiiInputState, UNiiInputStatusRecord
+from .unii import (
+    UNiiCommand,
+    UNiiInputState,
+    UNiiInputStatusRecord,
+    UNiiSection,
+    UNiiSectionArmedState,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,6 +48,18 @@ async def async_setup_entry(
             )
             entities.append(
                 UNiiInputSensor(coordinator, entity_description, unii_input.number)
+            )
+
+    for number, section in coordinator.unii.sections.items():
+        if section.active:
+            name = f"Section {number}"
+            if section.name is not None:
+                name = section.name
+            entity_description = SensorEntityDescription(
+                key=f"section{number}-enum", name=name
+            )
+            entities.append(
+                UNiiSectionSensor(coordinator, entity_description, section.number)
             )
 
     async_add_entities(entities)
@@ -175,5 +193,62 @@ class UNiiInputSensor(UNiiSensor):
             self._handle_input_status(input_status)
         else:
             return
+
+        self.async_write_ha_state()
+
+
+class UNiiSectionSensor(UNiiSensor):
+    """UNii Sensor for sections."""
+
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["armed", "disarmed", "alarm"]
+
+    def __init__(
+        self,
+        coordinator: UNiiCoordinator,
+        entity_description: SensorEntityDescription,
+        section_id: int,
+    ):
+        """Initialize the sensor."""
+        super().__init__(coordinator, entity_description)
+
+        self.section_id = section_id
+
+    def _handle_section(self, section: UNiiSection):
+        if section.armed_state == UNiiSectionArmedState.NOT_PROGRAMMED:
+            self._attr_available = False
+        elif section.armed_state == UNiiSectionArmedState.ARMED:
+            self._attr_native_value = "armed"
+        elif section.armed_state == UNiiSectionArmedState.DISARMED:
+            self._attr_native_value = "disarmed"
+        elif section.armed_state == UNiiSectionArmedState.ALARM:
+            self._attr_native_value = "alarm"
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+
+        if not self.coordinator.unii.connected:
+            self._attr_available = False
+        else:
+            section = self.coordinator.unii.sections.get(self.section_id)
+            self._handle_section(section)
+
+        self.async_write_ha_state()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+
+        super()._handle_coordinator_update()
+
+        if self.coordinator.data is None:
+            return
+
+        command = self.coordinator.data.get("command")
+        data = self.coordinator.data.get("data")
+
+        if command == UNiiCommand.RESPONSE_REQUEST_SECTION_STATUS:
+            section = self.coordinator.unii.sections.get(self.section_id)
+            self._handle_section(section)
 
         self.async_write_ha_state()
