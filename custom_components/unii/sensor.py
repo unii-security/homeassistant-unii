@@ -34,11 +34,11 @@ async def async_setup_entry(
             None,
             UNiiInputState.DISABLED,
         ]:
-            name = f"Input {number} (enum)"
+            name = f"Input {number}"
             if unii_input.name is not None:
                 name = unii_input.name
             entity_description = SensorEntityDescription(
-                key=f"input-enum{number}", name=name
+                key=f"input{number}-enum", name=name
             )
             entities.append(
                 UNiiInputSensor(coordinator, entity_description, unii_input.number)

@@ -48,7 +48,7 @@ async def async_setup_entry(
     #         if unii_input.name is not None:
     #             name = unii_input.name
     #         entity_description = BinarySensorEntityDescription(
-    #             key=f"input-binary{number}",
+    #             key=f"input{number}-binary",
     #             name=name,
     #             device_class=BinarySensorDeviceClass.TAMPER,
     #         )
