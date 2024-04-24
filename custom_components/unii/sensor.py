@@ -12,6 +12,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import DOMAIN, UNiiCoordinator
@@ -21,6 +22,7 @@ from .unii import (
     UNiiInputStatusRecord,
     UNiiSection,
     UNiiSectionArmedState,
+    UNiiSensorType,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,28 +37,24 @@ async def async_setup_entry(
     coordinator: UNiiCoordinator = hass.data[DOMAIN][config_entry.entry_id]
     entities = []
 
-    for number, unii_input in coordinator.unii.inputs.items():
+    for _, unii_input in coordinator.unii.inputs.items():
         if "status" in unii_input and unii_input.status not in [
             None,
             UNiiInputState.DISABLED,
         ]:
-            name = f"Input {number}"
-            if unii_input.name is not None:
-                name = unii_input.name
             entity_description = SensorEntityDescription(
-                key=f"input{number}-enum", name=name
+                key=f"input{unii_input.number}-enum",
+                name=unii_input.name,
             )
             entities.append(
                 UNiiInputSensor(coordinator, entity_description, unii_input.number)
             )
 
-    for number, section in coordinator.unii.sections.items():
+    for _, section in coordinator.unii.sections.items():
         if section.active:
-            name = f"Section {number}"
-            if section.name is not None:
-                name = section.name
             entity_description = SensorEntityDescription(
-                key=f"section{number}-enum", name=name
+                key=f"section{section.number}-enum",
+                name=section.name,
             )
             entities.append(
                 UNiiSectionSensor(coordinator, entity_description, section.number)
@@ -82,6 +80,8 @@ class UNiiSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = coordinator.device_info
         self._attr_unique_id = f"{coordinator.unii.unique_id}-{entity_description.key}"
+        if entity_description.name != UNDEFINED:
+            self._attr_name = entity_description.name
 
         self.entity_description = entity_description
 
@@ -143,6 +143,7 @@ class UNiiInputSensor(UNiiSensor):
         super().__init__(coordinator, entity_description)
 
         self.input_id = input_id
+        self._attr_translation_placeholders = {"input_number": input_id}
 
     def _handle_input_status(self, input_status: UNiiInputStatusRecord):
         if input_status.status == UNiiInputState.DISABLED or input_status.supervision:
@@ -159,6 +160,40 @@ class UNiiInputSensor(UNiiSensor):
                 self._attr_native_value = "tamper"
             elif input_status == UNiiInputState.MASKING:
                 self._attr_native_value = "masking"
+
+        match input_status.sensor_type:
+            # case UNiiSensorType.NOT_ACTIVE:
+            #     self._attr_icon = ""
+            # case UNiiSensorType.BURGLARY:
+            #     self._attr_icon = ""
+            case UNiiSensorType.FIRE:
+                self._attr_icon = "mdi:fire"
+            # case UNiiSensorType.TAMPER:
+            #     self._attr_icon = ""
+            # case UNiiSensorType.HOLDUP:
+            #     self._attr_icon = ""
+            case UNiiSensorType.MEDICAL:
+                self._attr_icon = "mdi:hospital-box"
+            # case UNiiSensorType.GAS:
+            #     self._attr_icon = ""
+            case UNiiSensorType.WATER:
+                self._attr_icon = "mdi:water-outline"
+            # case UNiiSensorType.TECHNICAL:
+            #     self._attr_icon = ""
+            case UNiiSensorType.DIRECT_DIALER_INPUT:
+                self._attr_icon = "mdi:phone"
+            case UNiiSensorType.KEYSWITCH:
+                self._attr_icon = "mdi:key"
+            # case UNiiSensorType.NO_ALARM:
+            #     self._attr_icon = ""
+            case UNiiSensorType.EN54_FIRE:
+                self._attr_icon = "mdi:fire"
+            # case UNiiSensorType.EN54_FIRE_MCP:
+            #     self._attr_icon = ""
+            # case UNiiSensorType.EN54_FAULT:
+            #     self._attr_icon = ""
+            # case UNiiSensorType.GLASSBREAK:
+            #     self._attr_icon = ""
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
@@ -215,6 +250,7 @@ class UNiiSectionSensor(UNiiSensor):
         super().__init__(coordinator, entity_description)
 
         self.section_id = section_id
+        self._attr_translation_placeholders = {"section_number": section_id}
 
     def _handle_section(self, section: UNiiSection):
         if section.armed_state == UNiiSectionArmedState.NOT_PROGRAMMED:

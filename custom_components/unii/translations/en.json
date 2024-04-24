@@ -19,8 +19,14 @@
         }
     },
     "entity": {
+    	"binary_sensor": {
+    		"online": {
+    			"name": "Online"
+    		}
+    	},
     	"sensor": {
     		"input": {
+    			"name": "Input {input_number}",
     			"state": {
     				"clear": "Clear",
     				"alarm": "Alarm",
@@ -30,6 +36,7 @@
     			}
     		},
     		"section": {
+    			"name": "Section {section_number}",
 	    		"state": {
 		    		"armed": "Armed",
 		    		"disarmed": "Disarmed",

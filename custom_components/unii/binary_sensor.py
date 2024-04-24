@@ -13,10 +13,17 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import DOMAIN, UNiiCoordinator
-from .unii import UNiiCommand, UNiiInputState, UNiiInputStatusRecord
+from .unii import (
+    UNiiCommand,
+    UNiiInputState,
+    UNiiInputStatusRecord,
+    UNiiSection,
+    UNiiSectionArmedState,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,24 +39,19 @@ async def async_setup_entry(
 
     entity_description = BinarySensorEntityDescription(
         key="online",
-        name="Online",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         entity_category=EntityCategory.DIAGNOSTIC,
     )
     entities.append(UNiiOnlineBinarySensor(coordinator, entity_description))
 
     # Enum sensors are selected over Binary sensors to represent inputs.
-    # for number, unii_input in coordinator.unii.inputs.items():
+    # for _, unii_input in coordinator.unii.inputs.items():
     #     if "status" in unii_input and unii_input.status not in [
     #         None,
     #         UNiiInputState.DISABLED,
     #     ]:
-    #         name = f"Input {number} (binary)"
-    #         if unii_input.name is not None:
-    #             name = unii_input.name
     #         entity_description = BinarySensorEntityDescription(
-    #             key=f"input{number}-binary",
-    #             name=name,
+    #             key=f"input{unii_input.number}-binary",
     #             device_class=BinarySensorDeviceClass.TAMPER,
     #         )
     #         entities.append(
@@ -80,6 +82,8 @@ class UNiiBinarySensor(CoordinatorEntity, BinarySensorEntity):
 
         self._attr_device_info = coordinator.device_info
         self._attr_unique_id = f"{coordinator.unii.unique_id}-{entity_description.key}"
+        if entity_description.name != UNDEFINED:
+            self._attr_name = entity_description.name
 
         self.entity_description = entity_description
 
@@ -129,6 +133,7 @@ class UNiiOnlineBinarySensor(UNiiBinarySensor):
     Special binary sensor which is always available once the sensor is added to hass and changes
     state based on online status.
     """
+    _attr_translation_key = "online"
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
@@ -169,6 +174,7 @@ class UNiiOnlineBinarySensor(UNiiBinarySensor):
 class UNiiInputBinarySensor(UNiiBinarySensor):
     # pylint: disable=too-few-public-methods
     """UNii Sensor for inputs."""
+    _attr_translation_key = "input"
 
     _attr_extra_state_attributes = {"alarm_type": "none"}
 
@@ -182,6 +188,7 @@ class UNiiInputBinarySensor(UNiiBinarySensor):
         super().__init__(coordinator, entity_description)
 
         self.input_id = input_id
+        self._attr_translation_placeholders = {"input_number": input_id}
 
     def _handle_input_status(self, input_status: UNiiInputStatusRecord):
         if input_status.status == UNiiInputState.DISABLED or input_status.supervision:
