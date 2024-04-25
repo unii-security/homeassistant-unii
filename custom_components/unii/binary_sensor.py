@@ -244,6 +244,8 @@ class UNiiInputBinarySensor(UNiiBinarySensor):
             if self.input_id == 1:
                 _LOGGER.debug("Input Status: %s", input_status)
             self._handle_input_status(input_status)
+        elif command == UNiiCommand.INPUT_STATUS_UPDATE and data.number == self.input_id:
+            self._handle_input_status(data)
         else:
             return
 

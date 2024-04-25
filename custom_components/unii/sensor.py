@@ -227,6 +227,8 @@ class UNiiInputSensor(UNiiSensor):
         elif command == UNiiCommand.INPUT_STATUS_CHANGED and self.input_id in data:
             input_status: UNiiInputStatusRecord = data.get(self.input_id)
             self._handle_input_status(input_status)
+        elif command == UNiiCommand.INPUT_STATUS_UPDATE and data.number == self.input_id:
+            self._handle_input_status(data)
         else:
             return
 
