@@ -18,6 +18,11 @@
             }
         }
     },
+	"device": {
+		"unii": {
+			"name": "Alphatronics {device_name} on {connection}"
+		}
+	},
     "entity": {
     	"binary_sensor": {
     		"online": {

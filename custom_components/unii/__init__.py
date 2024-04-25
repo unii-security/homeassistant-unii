@@ -60,10 +60,11 @@ class UNiiCoordinator(DataUpdateCoordinator):
         #     sw_version = unii.equipment_information.software_version,
         # )
 
-        # ToDo: Get device info from Device Entry?
+        # ToDo: Get device info from Config Entry?
         self.device_info = DeviceInfo(
             identifiers={(DOMAIN, unii.unique_id)},
-            name=f"Alphatronics {unii.equipment_information.device_name} on {unii.connection}",
+            translation_key="unii",
+            translation_placeholders={"device_name": unii.equipment_information.device_name, "connection": str(unii.connection)},
             manufacturer="Alphatronics",
             sw_version=unii.equipment_information.software_version,
         )
