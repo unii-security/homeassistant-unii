@@ -62,40 +62,19 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle the setup local."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="setup_local",
+                data_schema=self.LOCAL_SCHEMA,
+            )
+
         errors: dict[str, str] = {}
 
-        if user_input is not None:
-            try:
-                info = await self.validate_input_setup_local(user_input, errors)
-            except CannotConnect:
-                errors["base"] = "cannot_connect"
-            except Exception as ex:  # pylint: disable=broad-except
-                _LOGGER.exception("Unexpected exception: %s", ex)
-                errors["base"] = "unknown"
-            else:
-                return self.async_create_entry(title=info["title"], data=info)
-
-        return self.async_show_form(
-            step_id="setup_local",
-            data_schema=self.LOCAL_SCHEMA,
-            errors=errors,
-        )
-
-    async def validate_input_setup_local(
-        self, data: dict[str, Any], errors: dict[str, str]
-    ) -> dict[str, Any]:
-        """Validate the user input allows us to connect.
-
-        Data has the keys from _step_setup_local_schema with values provided by the user.
-        """
-        # Validate the data can be used to set up a connection.
-        self.LOCAL_SCHEMA(data)
-
-        host = data.get(CONF_HOST)
-        port = data.get(CONF_PORT, DEFAULT_PORT)
+        host = user_input.get(CONF_HOST)
+        port = user_input.get(CONF_PORT, DEFAULT_PORT)
         # ToDo: Test if the host exists?
 
-        shared_key = data.get(CONF_SHARED_KEY, None)
+        shared_key = user_input.get(CONF_SHARED_KEY, None)
         # ToDo: Validate the shared key?
         if shared_key is not None and shared_key.strip() == "":
             shared_key = None
@@ -105,7 +84,7 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             # If the shared key is shorter than 16 bytes it's padded with spaces (0x20).
             while len(shared_key) < 16:
-                shared_key.append(0x20)
+                shared_key += str(0x20)
 
             shared_key = shared_key.encode()
 
@@ -113,23 +92,27 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Test if we can connect to the device.
         if not await unii.connect():
-            raise CannotConnect(
-                f"Unable to connect to Alphatronics UNii on {unii.connection}"
+            errors["base"] = "cannot_connect"
+            _LOGGER.error(
+                "Unable to connect to Alphatronics UNii on %s", unii.connection
             )
+        else:
+            await unii.disconnect()
 
-        await self.async_set_unique_id(unii.unique_id)
-        self._abort_if_unique_id_configured()
+            await self.async_set_unique_id(unii.unique_id)
+            self._abort_if_unique_id_configured()
 
-        title = f"Alphatronics {unii.equipment_information.device_name} on {unii.connection}"
+            title = f"Alphatronics {unii.equipment_information.device_name} on {unii.connection}"
+            data = {
+                CONF_TYPE: CONF_TYPE_LOCAL,
+                CONF_HOST: host,
+                CONF_PORT: port,
+                CONF_SHARED_KEY: shared_key.hex(),
+            }
+            return self.async_create_entry(title=title, data=data)
 
-        await unii.disconnect()
-        _LOGGER.info("Alphatronics UNii on %s available", unii.connection)
-
-        # Return info that you want to store in the config entry.
-        return {
-            "title": title,
-            CONF_TYPE: CONF_TYPE_LOCAL,
-            CONF_HOST: host,
-            CONF_PORT: port,
-            CONF_SHARED_KEY: shared_key.hex(),
-        }
+        return self.async_show_form(
+            step_id="setup_local",
+            data_schema=self.LOCAL_SCHEMA,
+            errors=errors,
+        )
