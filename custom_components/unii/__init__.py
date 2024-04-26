@@ -64,7 +64,10 @@ class UNiiCoordinator(DataUpdateCoordinator):
         self.device_info = DeviceInfo(
             identifiers={(DOMAIN, unii.unique_id)},
             translation_key="unii",
-            translation_placeholders={"device_name": unii.equipment_information.device_name, "connection": str(unii.connection)},
+            translation_placeholders={
+                "device_name": unii.equipment_information.device_name,
+                "connection": str(unii.connection),
+            },
             manufacturer="Alphatronics",
             sw_version=unii.equipment_information.software_version,
         )
