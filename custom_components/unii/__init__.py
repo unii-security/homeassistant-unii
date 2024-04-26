@@ -69,7 +69,7 @@ class UNiiCoordinator(DataUpdateCoordinator):
                 "connection": str(unii.connection),
             },
             manufacturer="Alphatronics",
-            sw_version=unii.equipment_information.software_version,
+            sw_version=str(unii.equipment_information.software_version),
         )
 
         self.unii.add_event_occurred_callback(self.event_occurred_callback)
