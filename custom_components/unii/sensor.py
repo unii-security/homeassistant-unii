@@ -149,7 +149,7 @@ class UNiiInputSensor(UNiiSensor):
         self._attr_translation_placeholders = {"input_number": input_number}
 
     def _handle_input_status(self, input_status: UNiiInputStatusRecord):
-        self._attr_extra_state_attributes["unput_type"] = str(
+        self._attr_extra_state_attributes["input_type"] = str(
             input_status["input_type"]
         )
         self._attr_extra_state_attributes["sensor_type"] = str(
