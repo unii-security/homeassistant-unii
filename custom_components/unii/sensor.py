@@ -139,13 +139,13 @@ class UNiiInputSensor(UNiiSensor):
         self,
         coordinator: UNiiCoordinator,
         entity_description: SensorEntityDescription,
-        input_id: int,
+        input_number: int,
     ):
         """Initialize the sensor."""
         super().__init__(coordinator, entity_description)
 
-        self.input_id = input_id
-        self._attr_translation_placeholders = {"input_number": input_id}
+        self.input_number = input_number
+        self._attr_translation_placeholders = {"input_number": input_number}
 
     def _handle_input_status(self, input_status: UNiiInputStatusRecord):
         if input_status.status == UNiiInputState.DISABLED or input_status.supervision:
@@ -204,7 +204,7 @@ class UNiiInputSensor(UNiiSensor):
             self._attr_available = False
         else:
             input_status: UNiiInputStatusRecord = self.coordinator.unii.inputs.get(
-                self.input_id
+                self.input_number
             )
 
             self._handle_input_status(input_status)
@@ -223,14 +223,18 @@ class UNiiInputSensor(UNiiSensor):
         command = self.coordinator.data.get("command")
         data = self.coordinator.data.get("data")
 
-        if command == UNiiCommand.EVENT_OCCURRED and data.input_id == self.input_id:
+        if (
+            command == UNiiCommand.EVENT_OCCURRED
+            and data.input_number == self.input_number
+        ):
             # ToDo
             pass
-        elif command == UNiiCommand.INPUT_STATUS_CHANGED and self.input_id in data:
-            input_status: UNiiInputStatusRecord = data.get(self.input_id)
+        elif command == UNiiCommand.INPUT_STATUS_CHANGED and self.input_number in data:
+            input_status: UNiiInputStatusRecord = data.get(self.input_number)
             self._handle_input_status(input_status)
         elif (
-            command == UNiiCommand.INPUT_STATUS_UPDATE and data.number == self.input_id
+            command == UNiiCommand.INPUT_STATUS_UPDATE
+            and data.number == self.input_number
         ):
             self._handle_input_status(data)
         else:
@@ -250,13 +254,13 @@ class UNiiSectionSensor(UNiiSensor):
         self,
         coordinator: UNiiCoordinator,
         entity_description: SensorEntityDescription,
-        section_id: int,
+        section_number: int,
     ):
         """Initialize the sensor."""
         super().__init__(coordinator, entity_description)
 
-        self.section_id = section_id
-        self._attr_translation_placeholders = {"section_number": section_id}
+        self.section_number = section_number
+        self._attr_translation_placeholders = {"section_number": section_number}
 
     def _handle_section(self, section: UNiiSection):
         if section.armed_state == UNiiSectionArmedState.NOT_PROGRAMMED:
@@ -274,7 +278,7 @@ class UNiiSectionSensor(UNiiSensor):
         if not self.coordinator.unii.connected:
             self._attr_available = False
         else:
-            section = self.coordinator.unii.sections.get(self.section_id)
+            section = self.coordinator.unii.sections.get(self.section_number)
             self._handle_section(section)
 
         self.async_write_ha_state()
@@ -292,7 +296,7 @@ class UNiiSectionSensor(UNiiSensor):
         data = self.coordinator.data.get("data")
 
         if command == UNiiCommand.RESPONSE_REQUEST_SECTION_STATUS:
-            section = self.coordinator.unii.sections.get(self.section_id)
+            section = self.coordinator.unii.sections.get(self.section_number)
             self._handle_section(section)
 
         self.async_write_ha_state()
