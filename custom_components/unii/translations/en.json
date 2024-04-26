@@ -24,6 +24,11 @@
 		}
 	},
     "entity": {
+    	"alarm_control_panel": {
+    		"section": {
+    			"name": "Section {section_number}"
+			}
+    	},
     	"binary_sensor": {
     		"online": {
     			"name": "Online"
