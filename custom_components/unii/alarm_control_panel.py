@@ -18,7 +18,7 @@ from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import DOMAIN, UNiiCoordinator
-from .unii import UNiiCommand, UNiiSection, UNiiSectionArmedState
+from .unii import UNiiCommand, UNiiFeature, UNiiSection, UNiiSectionArmedState
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,15 +32,16 @@ async def async_setup_entry(
     coordinator: UNiiCoordinator = hass.data[DOMAIN][config_entry.entry_id]
     entities = []
 
-    for _, section in coordinator.unii.sections.items():
-        if section.active:
-            entity_description = AlarmControlPanelEntityDescription(
-                key=f"section{section.number}-arm",
-                name=section.name,
-            )
-            entities.append(
-                UNiiArmSection(coordinator, entity_description, section.number)
-            )
+    if UNiiFeature.ARM_SECTION in coordinator.unii.features:
+        for _, section in coordinator.unii.sections.items():
+            if section.active:
+                entity_description = AlarmControlPanelEntityDescription(
+                    key=f"section{section.number}-arm",
+                    name=section.name,
+                )
+                entities.append(
+                    UNiiArmSection(coordinator, entity_description, section.number)
+                )
 
     async_add_entities(entities)
 

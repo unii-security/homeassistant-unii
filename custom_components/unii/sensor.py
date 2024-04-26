@@ -18,6 +18,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from . import DOMAIN, UNiiCoordinator
 from .unii import (
     UNiiCommand,
+    UNiiFeature,
     UNiiInputState,
     UNiiInputStatusRecord,
     UNiiSection,
@@ -50,15 +51,16 @@ async def async_setup_entry(
                 UNiiInputSensor(coordinator, entity_description, unii_input.number)
             )
 
-    for _, section in coordinator.unii.sections.items():
-        if section.active:
-            entity_description = SensorEntityDescription(
-                key=f"section{section.number}-enum",
-                name=section.name,
-            )
-            entities.append(
-                UNiiSectionSensor(coordinator, entity_description, section.number)
-            )
+    if UNiiFeature.ARM_SECTION not in coordinator.unii.features:
+        for _, section in coordinator.unii.sections.items():
+            if section.active:
+                entity_description = SensorEntityDescription(
+                    key=f"section{section.number}-enum",
+                    name=section.name,
+                )
+                entities.append(
+                    UNiiSectionSensor(coordinator, entity_description, section.number)
+                )
 
     async_add_entities(entities)
 
