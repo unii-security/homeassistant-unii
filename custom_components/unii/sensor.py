@@ -149,15 +149,18 @@ class UNiiInputSensor(UNiiSensor):
         self._attr_translation_placeholders = {"input_number": input_number}
 
     def _handle_input_status(self, input_status: UNiiInputStatusRecord):
-        self._attr_extra_state_attributes["input_type"] = str(
-            input_status["input_type"]
-        )
-        self._attr_extra_state_attributes["sensor_type"] = str(
-            input_status["sensor_type"]
-        )
-        self._attr_extra_state_attributes["sections"] = [
-            section["number"] for section in input_status.sections
-        ]
+        if "input_type" in input_status:
+            self._attr_extra_state_attributes["input_type"] = str(
+                input_status.input_type
+            )
+        if "sensor_type" in input_status:
+            self._attr_extra_state_attributes["sensor_type"] = str(
+                input_status.sensor_type
+            )
+        if "sections" in input_status:
+            self._attr_extra_state_attributes["sections"] = [
+                section.number for section in input_status.sections
+            ]
 
         if input_status.status == UNiiInputState.DISABLED or input_status.supervision:
             self._attr_available = False
