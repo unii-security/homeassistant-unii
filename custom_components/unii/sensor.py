@@ -210,7 +210,7 @@ class UNiiInputSensor(UNiiSensor):
             case UNiiSensorType.EN54_FAULT:
                 self._attr_icon = "mdi:fire"
             case UNiiSensorType.GLASSBREAK:
-                self._attr_icon = "mdi:window-maximize"
+                self._attr_icon = "mdi:window-closed-variant"
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
