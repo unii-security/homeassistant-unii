@@ -181,36 +181,36 @@ class UNiiInputSensor(UNiiSensor):
         match input_status.sensor_type:
             # case UNiiSensorType.NOT_ACTIVE:
             #     self._attr_icon = ""
-            # case UNiiSensorType.BURGLARY:
-            #     self._attr_icon = ""
+            case UNiiSensorType.BURGLARY:
+                self._attr_icon = "mdi:motion-sensor"
             case UNiiSensorType.FIRE:
                 self._attr_icon = "mdi:fire"
-            # case UNiiSensorType.TAMPER:
-            #     self._attr_icon = ""
-            # case UNiiSensorType.HOLDUP:
-            #     self._attr_icon = ""
+            case UNiiSensorType.TAMPER:
+                self._attr_icon = "mdi:tools"
+            case UNiiSensorType.HOLDUP:
+                self._attr_icon = "mdi:robot-angry"
             case UNiiSensorType.MEDICAL:
-                self._attr_icon = "mdi:hospital-box"
-            # case UNiiSensorType.GAS:
-            #     self._attr_icon = ""
+                self._attr_icon = "mdi:medication"
+            case UNiiSensorType.GAS:
+                self._attr_icon = "mdi:waves-arrow-up"
             case UNiiSensorType.WATER:
-                self._attr_icon = "mdi:water-outline"
-            # case UNiiSensorType.TECHNICAL:
-            #     self._attr_icon = ""
+                self._attr_icon = "mdi:water-alert"
+            case UNiiSensorType.TECHNICAL:
+                self._attr_icon = "mdi:cog"
             case UNiiSensorType.DIRECT_DIALER_INPUT:
-                self._attr_icon = "mdi:phone"
+                self._attr_icon = "mdi:cog"
             case UNiiSensorType.KEYSWITCH:
                 self._attr_icon = "mdi:key"
-            # case UNiiSensorType.NO_ALARM:
-            #     self._attr_icon = ""
+            case UNiiSensorType.NO_ALARM:
+                self._attr_icon = "mdi:cog"
             case UNiiSensorType.EN54_FIRE:
                 self._attr_icon = "mdi:fire"
-            # case UNiiSensorType.EN54_FIRE_MCP:
-            #     self._attr_icon = ""
-            # case UNiiSensorType.EN54_FAULT:
-            #     self._attr_icon = ""
-            # case UNiiSensorType.GLASSBREAK:
-            #     self._attr_icon = ""
+            case UNiiSensorType.EN54_FIRE_MCP:
+                self._attr_icon = "mdi:fire"
+            case UNiiSensorType.EN54_FAULT:
+                self._attr_icon = "mdi:fire"
+            case UNiiSensorType.GLASSBREAK:
+                self._attr_icon = "mdi:window-maximize"
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
@@ -283,10 +283,13 @@ class UNiiSectionSensor(UNiiSensor):
             self._attr_available = False
         elif section.armed_state == UNiiSectionArmedState.ARMED:
             self._attr_native_value = "armed"
+            self._attr_icon = "mdi:lock"
         elif section.armed_state == UNiiSectionArmedState.DISARMED:
             self._attr_native_value = "disarmed"
+            self._attr_icon = "mdi:lock-open-variant"
         elif section.armed_state == UNiiSectionArmedState.ALARM:
             self._attr_native_value = "alarm"
+            self._attr_icon = "mdi:lock"
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
