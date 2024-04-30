@@ -23,6 +23,7 @@ from .unii import (
     UNiiInputStatusRecord,
     UNiiSection,
     UNiiSectionArmedState,
+    UNiiSectionStatusRecord,
     UNiiSensorType,
 )
 
@@ -277,7 +278,7 @@ class UNiiSectionSensor(UNiiSensor):
         self._attr_extra_state_attributes = {"section_number": section_number}
         self._attr_translation_placeholders = {"section_number": section_number}
 
-    def _handle_section(self, section: UNiiSection):
+    def _handle_section_status(self, section: UNiiSectionStatusRecord):
         if section.armed_state == UNiiSectionArmedState.NOT_PROGRAMMED:
             self._attr_available = False
         elif section.armed_state == UNiiSectionArmedState.ARMED:
@@ -294,7 +295,7 @@ class UNiiSectionSensor(UNiiSensor):
             self._attr_available = False
         else:
             section = self.coordinator.unii.sections.get(self.section_number)
-            self._handle_section(section)
+            self._handle_section_status(section)
 
         self.async_write_ha_state()
 
@@ -310,8 +311,17 @@ class UNiiSectionSensor(UNiiSensor):
         command = self.coordinator.data.get("command")
         data = self.coordinator.data.get("data")
 
-        if command == UNiiCommand.RESPONSE_REQUEST_SECTION_STATUS:
-            section = self.coordinator.unii.sections.get(self.section_number)
-            self._handle_section(section)
+        if (
+            command == UNiiCommand.EVENT_OCCURRED
+            and self.section_number in data.sections
+        ):
+            # ToDo
+            pass
+        elif (
+            command == UNiiCommand.RESPONSE_REQUEST_SECTION_STATUS
+            and self.section_number in data
+        ):
+            section_status: UNiiSectionStatusRecord = data.get(self.section_number)
+            self._handle_section_status(section_status)
 
         self.async_write_ha_state()
