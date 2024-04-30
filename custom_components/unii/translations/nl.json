@@ -1,19 +1,19 @@
 {
     "config": {
         "abort": {
-            "already_configured": "Device is already configured"
+            "already_configured": "Apparaat is al geconfigueerd"
         },
         "error": {
-            "cannot_connect": "Failed to connect",
-            "unknown": "Unexpected error"
+            "cannot_connect": "Kan geen verbinding maken",
+            "unknown": "Onverwachte fout"
         },
         "step": {
             "setup_local": {
                 "title": "Alphatronics UNii",
                 "data": {
                     "host": "Host",
-                    "port": "Port",
-                    "shared_key": "Shared key"
+                    "port": "Poort",
+                    "shared_key": "Encryptie sleutel"
                 }
             }
         }
@@ -38,18 +38,18 @@
     		"input": {
     			"name": "Input {input_number}",
     			"state": {
-    				"clear": "Closed",
+    				"clear": "Gesloten",
     				"alarm": "Alarm",
-    				"tamper": "Tamper",
-    				"masking": "Masking",
-    				"bypassed": "Bypassed"
+    				"tamper": "Sabotage",
+    				"masking": "Maskeer",
+    				"bypassed": "Geblokkeerd"
     			}
     		},
     		"section": {
-    			"name": "Section {section_number}",
+    			"name": "Sectie {section_number}",
 	    		"state": {
-		    		"armed": "Armed",
-		    		"disarmed": "Disarmed",
+		    		"armed": "Ingeschakeld",
+		    		"disarmed": "Uitgeschakeld",
 		    		"alarm": "Alarm"
 	    		}
     		}
