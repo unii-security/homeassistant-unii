@@ -16,11 +16,11 @@ Tested with the UNii 32, 128 and 512. No additional UNii license needed.
 
 ## Configuring the UNii
 
-In the UNii  API configuration the following options need to be set: 
-Type: Basic encryption
-Transmission: TCP\
-Input update interval:  0s to have to fastest input response type. (Only for fw version 2.17.x and above.\
-API version: UNii.\
+In the UNii  API configuration the following options need to be set:
+* Type: Basic encryption
+* Transmission: TCP
+* Input update interval:  0s to have to fastest input response type. (Only for fw version 2.17.x and above.
+* API version: UNii.
 
 ### Shared Key
 
