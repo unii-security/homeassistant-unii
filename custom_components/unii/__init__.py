@@ -95,6 +95,7 @@ class UNiiCoordinator(DataUpdateCoordinator):
             UNiiCommand.INPUT_STATUS_CHANGED,
             UNiiCommand.RESPONSE_REQUEST_SECTION_STATUS,
             UNiiCommand.INPUT_STATUS_UPDATE,
+            UNiiCommand.RESPONSE_REQUEST_INPUT_ARRANGEMENT,
         ]:
             self.async_set_updated_data({"command": command, "data": data})
 
