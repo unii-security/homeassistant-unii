@@ -206,7 +206,7 @@ class UNiiInputBinarySensor(UNiiBinarySensor):
             elif input_status.status == UNiiInputState.TAMPER:
                 self._attr_is_on = True
                 self._attr_extra_state_attributes["alarm_type"] = "tamper"
-            elif input_status == UNiiInputState.MASKING:
+            elif input_status.status == UNiiInputState.MASKING:
                 self._attr_is_on = True
                 self._attr_extra_state_attributes["alarm_type"] = "masking"
 

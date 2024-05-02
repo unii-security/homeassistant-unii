@@ -175,7 +175,7 @@ class UNiiInputSensor(UNiiSensor):
                 self._attr_native_value = "alarm"
             elif input_status.status == UNiiInputState.TAMPER:
                 self._attr_native_value = "tamper"
-            elif input_status == UNiiInputState.MASKING:
+            elif input_status.status == UNiiInputState.MASKING:
                 self._attr_native_value = "masking"
 
         match input_status.sensor_type:
