@@ -8,14 +8,12 @@ from homeassistant.components.switch import (SwitchDeviceClass, SwitchEntity,
                                              SwitchEntityDescription)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import DOMAIN, UNiiCoordinator
-from .unii import (UNiiCommand, UNiiOutputState, UNiiOututStatusRecord,
-                   UNiiSection, UNiiSectionArmedState)
+from .unii import (UNiiCommand, UNiiFeature, UNiiOutputType)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -29,20 +27,21 @@ async def async_setup_entry(
     coordinator: UNiiCoordinator = hass.data[DOMAIN][config_entry.entry_id]
     entities = []
 
-    for _, output in coordinator.unii.outputs.items():
-    #     if "status" in output and output.status not in [
-    #         None,
-    #         UNiiInputState.DISABLED,
-    #     ]:
-    #         entity_description = BinarySensorEntityDescription(
-    #             key=f"input{output.number}-binary",
-    #             device_class=BinarySensorDeviceClass.TAMPER,
-    #         )
-    #         entities.append(
-    #             UNiiInputBinarySensor(
-    #                 coordinator, entity_description, output.number
-    #             )
-    #         )
+    if UNiiFeature.SET_OUTPUT in coordinator.unii.features:
+        for _, output in coordinator.unii.outputs.items():
+            if "status" in output and output.status not in [
+                None,
+                UNiiOutputType.NOT_ACTIVE,
+            ]:
+                entity_description = SwitchEntityDescription(
+                    key=f"output{output.number}-binary",
+                    device_class=SwitchDeviceClass.SWITCH,
+                )
+                entities.append(
+                    UNiiOutputSwitch(
+                        coordinator, entity_description, output.number
+                    )
+                )
 
     async_add_entities(entities)
 
@@ -70,3 +69,105 @@ class UNiiSwitch(CoordinatorEntity, SwitchEntity):
             self._attr_name = entity_description.name
 
         self.entity_description = entity_description
+
+    async def async_added_to_hass(self) -> None:
+        """Called when switch is added to Home Assistant."""
+        await super().async_added_to_hass()
+
+        if self.coordinator.unii.connected:
+            self._attr_available = True
+
+        self.async_write_ha_state()
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        if not self._attr_available:
+            return self._attr_available
+
+        return self.coordinator.last_update_success
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+
+        if not self.coordinator.unii.connected:
+            self._attr_available = False
+
+        if self.coordinator.data is None:
+            command = self.coordinator.data.get("command")
+    
+            if command == UNiiCommand.NORMAL_DISCONNECT:
+                self._attr_available = False
+            elif command in [
+                UNiiCommand.CONNECTION_REQUEST_RESPONSE,
+                UNiiCommand.POLL_ALIVE_RESPONSE,
+            ]:
+                self._attr_available = True
+
+        self.async_write_ha_state()
+
+
+class UNiiOutputSwitch(UNiiSwitch):
+    """UNii Switch for outputs."""
+
+    def __init__(
+        self,
+        coordinator: UNiiCoordinator,
+        entity_description: SwitchEntityDescription,
+        output_number: int,
+    ):
+        """Initialize the switch."""
+        super().__init__(coordinator, entity_description)
+
+        self.output_number = output_number
+        self._attr_extra_state_attributes = {"output_number": output_number}
+        self._attr_translation_placeholders = {"output_number": output_number}
+
+    # def _handle_output_status(self, output_status: UNiiOutputStatusRecord):
+    #     pass
+    #
+    # async def async_added_to_hass(self) -> None:
+    #     await super().async_added_to_hass()
+    #
+    #     if not self.coordinator.unii.connected:
+    #         self._attr_available = False
+    #     else:
+    #         output_status: UNiiOutputStatusRecord = self.coordinator.unii.outputs.get(
+    #             self.output_number
+    #         )
+    #
+    #         self._handle_output_status(output_status)
+    #
+    #     self.async_write_ha_state()
+    #
+    # @callback
+    # def _handle_coordinator_update(self) -> None:
+    #     """Handle updated data from the coordinator."""
+    #
+    #     super()._handle_coordinator_update()
+    #
+    #     if self.coordinator.data is None:
+    #         return
+    #
+    #     command = self.coordinator.data.get("command")
+    #     data = self.coordinator.data.get("data")
+    #
+    #     if (
+    #         command == UNiiCommand.EVENT_OCCURRED
+    #         and data.output_number == self.output_number
+    #     ):
+    #         # ToDo
+    #         pass
+    #     elif command == UNiiCommand.OUTPUT_STATUS_CHANGED and self.output_number in data:
+    #         output_status: UNiiOutputStatusRecord = data.get(self.output_number)
+    #         self._handle_output_status(output_status)
+    #     elif (
+    #         command == UNiiCommand.OUTPUT_STATUS_UPDATE
+    #         and data.number == self.output_number
+    #     ):
+    #         self._handle_output_status(data)
+    #     else:
+    #         return
+    #
+    #     self.async_write_ha_state()
