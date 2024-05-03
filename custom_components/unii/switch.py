@@ -4,8 +4,11 @@ Creates Switch entities for the UNii Home Assistant integration.
 """
 import logging
 
-from homeassistant.components.switch import (SwitchDeviceClass, SwitchEntity,
-                                             SwitchEntityDescription)
+from homeassistant.components.switch import (
+    SwitchDeviceClass,
+    SwitchEntity,
+    SwitchEntityDescription,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -13,7 +16,7 @@ from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import DOMAIN, UNiiCoordinator
-from .unii import (UNiiCommand, UNiiFeature, UNiiOutputType)
+from .unii import UNiiCommand, UNiiFeature, UNiiOutputType
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,14 +36,19 @@ async def async_setup_entry(
                 None,
                 UNiiOutputType.NOT_ACTIVE,
             ]:
-                entity_description = SwitchEntityDescription(
-                    key=f"output{output.number}-binary",
-                    device_class=SwitchDeviceClass.SWITCH,
-                )
-                entities.append(
-                    UNiiOutputSwitch(
-                        coordinator, entity_description, output.number
+                if output.name is None:
+                    entity_description = SwitchEntityDescription(
+                        key=f"output{output.number}-switch",
+                        device_class=SwitchDeviceClass.SWITCH,
                     )
+                else:
+                    entity_description = SwitchEntityDescription(
+                        key=f"output{output.number}-switch",
+                        device_class=SwitchDeviceClass.SWITCH,
+                        name=output.name,
+                    )
+                entities.append(
+                    UNiiOutputSwitch(coordinator, entity_description, output.number)
                 )
 
     async_add_entities(entities)
@@ -65,7 +73,7 @@ class UNiiSwitch(CoordinatorEntity, SwitchEntity):
 
         self._attr_device_info = coordinator.device_info
         self._attr_unique_id = f"{coordinator.unii.unique_id}-{entity_description.key}"
-        if entity_description.name != UNDEFINED:
+        if entity_description.name not in [UNDEFINED, None]:
             self._attr_name = entity_description.name
 
         self.entity_description = entity_description
@@ -96,7 +104,7 @@ class UNiiSwitch(CoordinatorEntity, SwitchEntity):
 
         if self.coordinator.data is None:
             command = self.coordinator.data.get("command")
-    
+
             if command == UNiiCommand.NORMAL_DISCONNECT:
                 self._attr_available = False
             elif command in [

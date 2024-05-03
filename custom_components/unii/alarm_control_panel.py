@@ -35,10 +35,15 @@ async def async_setup_entry(
     if UNiiFeature.ARM_SECTION in coordinator.unii.features:
         for _, section in coordinator.unii.sections.items():
             if section.active:
-                entity_description = AlarmControlPanelEntityDescription(
-                    key=f"section{section.number}-arm",
-                    name=section.name,
-                )
+                if section.name is None:
+                    entity_description = AlarmControlPanelEntityDescription(
+                        key=f"section{section.number}-arm",
+                    )
+                else:
+                    entity_description = AlarmControlPanelEntityDescription(
+                        key=f"section{section.number}-arm",
+                        name=section.name,
+                    )
                 entities.append(
                     UNiiArmSection(coordinator, entity_description, section.number)
                 )
@@ -52,6 +57,9 @@ class UNiiAlarmControlPanel(CoordinatorEntity, AlarmControlPanelEntity):
     _attr_has_entity_name = True
     _attr_available = False
     _attr_is_disarmed = None
+    _attr_state = None
+    _attr_is_arming = None
+    _attr_is_disarming = None
 
     def __init__(
         self,
@@ -63,7 +71,7 @@ class UNiiAlarmControlPanel(CoordinatorEntity, AlarmControlPanelEntity):
 
         self._attr_device_info = coordinator.device_info
         self._attr_unique_id = f"{coordinator.unii.unique_id}-{entity_description.key}"
-        if entity_description.name != UNDEFINED:
+        if entity_description.name not in [UNDEFINED, None]:
             self._attr_name = entity_description.name
 
         self.entity_description = entity_description
@@ -173,6 +181,7 @@ class UNiiArmSection(UNiiAlarmControlPanel):
         self.async_write_ha_state()
 
     async def async_alarm_arm_away(self, code: str):
+        """Send arm away command."""
         self._attr_is_arming = True
         self.async_write_ha_state()
 
@@ -185,6 +194,7 @@ class UNiiArmSection(UNiiAlarmControlPanel):
         self.async_write_ha_state()
 
     async def async_alarm_disarm(self, code: str):
+        """Send disarm command."""
         self._attr_is_disarming = True
         self.async_write_ha_state()
 

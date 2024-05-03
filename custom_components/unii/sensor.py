@@ -21,7 +21,6 @@ from .unii import (
     UNiiFeature,
     UNiiInputState,
     UNiiInputStatusRecord,
-    UNiiSection,
     UNiiSectionArmedState,
     UNiiSectionStatusRecord,
     UNiiSensorType,
@@ -44,10 +43,15 @@ async def async_setup_entry(
             None,
             UNiiInputState.DISABLED,
         ]:
-            entity_description = SensorEntityDescription(
-                key=f"input{unii_input.number}-enum",
-                name=unii_input.name,
-            )
+            if unii_input.name is None:
+                entity_description = SensorEntityDescription(
+                    key=f"input{unii_input.number}-enum",
+                )
+            else:
+                entity_description = SensorEntityDescription(
+                    key=f"input{unii_input.number}-enum",
+                    name=unii_input.name,
+                )
             entities.append(
                 UNiiInputSensor(coordinator, entity_description, unii_input.number)
             )
@@ -55,10 +59,15 @@ async def async_setup_entry(
     if UNiiFeature.ARM_SECTION not in coordinator.unii.features:
         for _, section in coordinator.unii.sections.items():
             if section.active:
-                entity_description = SensorEntityDescription(
-                    key=f"section{section.number}-enum",
-                    name=section.name,
-                )
+                if section.name is None:
+                    entity_description = SensorEntityDescription(
+                        key=f"section{section.number}-enum",
+                    )
+                else:
+                    entity_description = SensorEntityDescription(
+                        key=f"section{section.number}-enum",
+                        name=section.name,
+                    )
                 entities.append(
                     UNiiSectionSensor(coordinator, entity_description, section.number)
                 )
@@ -72,6 +81,7 @@ class UNiiSensor(CoordinatorEntity, SensorEntity):
     _attr_has_entity_name = True
     _attr_available = False
     _attr_native_value = None
+    _attr_icon = None
 
     def __init__(
         self,
@@ -83,7 +93,8 @@ class UNiiSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = coordinator.device_info
         self._attr_unique_id = f"{coordinator.unii.unique_id}-{entity_description.key}"
-        if entity_description.name != UNDEFINED:
+        _LOGGER.debug("Name: %s", entity_description.name)
+        if entity_description.name not in [UNDEFINED, None]:
             self._attr_name = entity_description.name
 
         self.entity_description = entity_description
@@ -114,7 +125,7 @@ class UNiiSensor(CoordinatorEntity, SensorEntity):
 
         if self.coordinator.data is not None:
             command = self.coordinator.data.get("command")
-    
+
             if command == UNiiCommand.NORMAL_DISCONNECT:
                 self._attr_available = False
             elif command in [

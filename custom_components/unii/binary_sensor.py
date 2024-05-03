@@ -17,13 +17,7 @@ from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import DOMAIN, UNiiCoordinator
-from .unii import (
-    UNiiCommand,
-    UNiiInputState,
-    UNiiInputStatusRecord,
-    UNiiSection,
-    UNiiSectionArmedState,
-)
+from .unii import UNiiCommand, UNiiInputState, UNiiInputStatusRecord
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,10 +44,17 @@ async def async_setup_entry(
     #         None,
     #         UNiiInputState.DISABLED,
     #     ]:
-    #         entity_description = BinarySensorEntityDescription(
-    #             key=f"input{unii_input.number}-binary",
-    #             device_class=BinarySensorDeviceClass.TAMPER,
-    #         )
+    #         if unii_input.name is None:
+    #             entity_description = BinarySensorEntityDescription(
+    #                 key=f"input{unii_input.number}-binary",
+    #                 device_class=BinarySensorDeviceClass.TAMPER,
+    #             )
+    #         else:
+    #             entity_description = BinarySensorEntityDescription(
+    #                 key=f"input{unii_input.number}-binary",
+    #                 device_class=BinarySensorDeviceClass.TAMPER,
+    #                 name=unii_input.name,
+    #             )
     #         entities.append(
     #             UNiiInputBinarySensor(
     #                 coordinator, entity_description, unii_input.number
@@ -82,7 +83,7 @@ class UNiiBinarySensor(CoordinatorEntity, BinarySensorEntity):
 
         self._attr_device_info = coordinator.device_info
         self._attr_unique_id = f"{coordinator.unii.unique_id}-{entity_description.key}"
-        if entity_description.name != UNDEFINED:
+        if entity_description.name not in [UNDEFINED, None]:
             self._attr_name = entity_description.name
 
         self.entity_description = entity_description
