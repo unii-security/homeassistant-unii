@@ -77,7 +77,7 @@ class UNiiBinarySensor(CoordinatorEntity, BinarySensorEntity):
         coordinator: UNiiCoordinator,
         entity_description: BinarySensorEntityDescription,
     ):
-        """Initialize the sensor."""
+        """Initialize the binary sensor."""
         super().__init__(coordinator, entity_description.key)
 
         self._attr_device_info = coordinator.device_info
@@ -88,7 +88,7 @@ class UNiiBinarySensor(CoordinatorEntity, BinarySensorEntity):
         self.entity_description = entity_description
 
     async def async_added_to_hass(self) -> None:
-        """Called when sensor is added to Home Assistant."""
+        """Called when binary sensor is added to Home Assistant."""
         await super().async_added_to_hass()
 
         if self.coordinator.unii.connected:
@@ -173,7 +173,7 @@ class UNiiOnlineBinarySensor(UNiiBinarySensor):
 
 class UNiiInputBinarySensor(UNiiBinarySensor):
     # pylint: disable=too-few-public-methods
-    """UNii Sensor for inputs."""
+    """UNii Binary Sensor for inputs."""
     _attr_translation_key = "input"
 
     _attr_extra_state_attributes = {"alarm_type": "none"}
@@ -184,7 +184,7 @@ class UNiiInputBinarySensor(UNiiBinarySensor):
         entity_description: BinarySensorEntityDescription,
         input_number: int,
     ):
-        """Initialize the sensor."""
+        """Initialize the binary sensor."""
         super().__init__(coordinator, entity_description)
 
         self.input_number = input_number
