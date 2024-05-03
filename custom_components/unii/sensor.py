@@ -112,18 +112,16 @@ class UNiiSensor(CoordinatorEntity, SensorEntity):
         if not self.coordinator.unii.connected:
             self._attr_available = False
 
-        if self.coordinator.data is None:
-            return
-
-        command = self.coordinator.data.get("command")
-
-        if command == UNiiCommand.NORMAL_DISCONNECT:
-            self._attr_available = False
-        elif command in [
-            UNiiCommand.CONNECTION_REQUEST_RESPONSE,
-            UNiiCommand.POLL_ALIVE_RESPONSE,
-        ]:
-            self._attr_available = True
+        if self.coordinator.data is not None:
+            command = self.coordinator.data.get("command")
+    
+            if command == UNiiCommand.NORMAL_DISCONNECT:
+                self._attr_available = False
+            elif command in [
+                UNiiCommand.CONNECTION_REQUEST_RESPONSE,
+                UNiiCommand.POLL_ALIVE_RESPONSE,
+            ]:
+                self._attr_available = True
 
         self.async_write_ha_state()
 
@@ -215,9 +213,7 @@ class UNiiInputSensor(UNiiSensor):
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
 
-        if not self.coordinator.unii.connected:
-            self._attr_available = False
-        else:
+        if self.coordinator.unii.connected:
             input_status: UNiiInputStatusRecord = self.coordinator.unii.inputs.get(
                 self.input_number
             )
@@ -294,9 +290,7 @@ class UNiiSectionSensor(UNiiSensor):
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
 
-        if not self.coordinator.unii.connected:
-            self._attr_available = False
-        else:
+        if self.coordinator.unii.connected:
             section = self.coordinator.unii.sections.get(self.section_number)
             self._handle_section_status(section)
 
