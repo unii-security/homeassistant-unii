@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any, Final
 
@@ -35,8 +36,6 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required(CONF_SHARED_KEY): str,
         }
     )
-
-    CONNECT_SCHEMA = vol.Schema({})
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -99,10 +98,22 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         else:
             await unii.disconnect()
 
-            await self.async_set_unique_id(unii.unique_id)
+            # Wait a bit for the UNii to accept new connections later in the async_setup_entry
+            await asyncio.sleep(1)
+
+            if unii.equipment_information.device_id is not None:
+                # Newer versions of the UNii firmware provide a unique device id in the Equipment
+                # Information.
+                unique_id = unii.equipment_information.device_id
+            else:
+                # Fallback to the unique id of the connection (hostname) if the firmware does not
+                # provide a unique id.
+                unique_id = unii.connection.unique_id
+
+            await self.async_set_unique_id(unique_id)
             self._abort_if_unique_id_configured()
 
-            title = f"Alphatronics {unii.equipment_information.device_name} on {unii.connection}"
+            title = f"Alphatronics {unii.equipment_information.device_name} on {unii.connection.unique_id}"
             data = {
                 CONF_TYPE: CONF_TYPE_LOCAL,
                 CONF_HOST: host,
