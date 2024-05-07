@@ -93,7 +93,6 @@ class UNiiSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = coordinator.device_info
         self._attr_unique_id = f"{coordinator.unii.unique_id}-{entity_description.key}"
-        _LOGGER.debug("Name: %s", entity_description.name)
         if entity_description.name not in [UNDEFINED, None]:
             self._attr_name = entity_description.name
 
