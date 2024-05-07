@@ -13,7 +13,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TYPE, Platform
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.device_registry import format_mac
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -50,26 +50,27 @@ class UNiiCoordinator(DataUpdateCoordinator):
 
         self.unii = unii
 
-        # Create the device if not exists
-        # device_registry = dr.async_get(hass)
-        # device_entry = device_registry.async_get_or_create(
-        #     config_entry_id=entry.entry_id,
-        #     identifiers={(DOMAIN, unii.unique_id)},
-        #     name=f"Alphatronics {unii.equipment_information.device_name} on {unii.connection}",
-        #     manufacturer="Alphatronics",
-        #     sw_version = unii.equipment_information.software_version,
-        # )
+        identifiers = set()
+        # Older versions of the firmware don't return a unique device id in the Equipment
+        # Information, use the unique id of the connection (hostname) for all versions as an
+        # identifier to prevent the creation of a new device after a firmware upgrade.
+        identifiers.add((DOMAIN, unii.connection.unique_id))
+        if unii.equipment_information.device_id is not None:
+            identifiers.add((DOMAIN, unii.equipment_information.device_id))
+        if unii.equipment_information.mac_address is not None:
+            mac_address = format_mac(unii.equipment_information.mac_address)
+            identifiers.add((DOMAIN, mac_address))
 
-        # ToDo: Get device info from Config Entry?
         self.device_info = DeviceInfo(
-            identifiers={(DOMAIN, unii.unique_id)},
+            identifiers=identifiers,
             translation_key="unii",
             translation_placeholders={
                 "device_name": unii.equipment_information.device_name,
-                "connection": str(unii.connection),
+                "connection": unii.connection.unique_id,
             },
             manufacturer="Alphatronics",
             sw_version=str(unii.equipment_information.software_version),
+            serial_number=unii.equipment_information.serial_number,
         )
 
         self.unii.add_event_occurred_callback(self.event_occurred_callback)
@@ -111,9 +112,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Alphatronics UNii from a config entry."""
     unii = None
 
-    conf_type = CONF_TYPE_LOCAL
-    if CONF_TYPE in entry.data:
-        conf_type = entry.data[CONF_TYPE]
+    conf_type = entry.data.get(CONF_TYPE, CONF_TYPE_LOCAL)
 
     if conf_type == CONF_TYPE_LOCAL:
         host = entry.data[CONF_HOST]
@@ -128,6 +127,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     else:
         raise ConfigEntryError(
             f"Config type {conf_type} not supported for Alphatronics UNii"
+        )
+
+    if (
+        unii.equipment_information.device_id is not None
+        and entry.unique_id == unii.connection.unique_id
+    ):
+        # The config entry uses the old unique id of the connection, the firmware has probably
+        # been upgraded.
+        _LOGGER.debug("Updating config entry")
+        hass.config_entries.async_update_entry(
+            entry, unique_id=unii.equipment_information.device_id
         )
 
     # Setup coordinator
