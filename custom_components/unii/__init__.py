@@ -38,7 +38,7 @@ class UNiiCoordinator(DataUpdateCoordinator):
     unii: UNii = None
     device_info: DeviceInfo = None
 
-    def __init__(self, hass, unii: UNii):
+    def __init__(self, hass: HomeAssistant, unii: UNii, config_entry_id: str):
         """Initialize Alphatronics UNii Data Update Coordinator."""
 
         super().__init__(
@@ -49,6 +49,7 @@ class UNiiCoordinator(DataUpdateCoordinator):
         )
 
         self.unii = unii
+        self.config_entry_id = config_entry_id
 
         identifiers = set()
         # Older versions of the firmware don't return a unique device id in the Equipment
@@ -88,10 +89,16 @@ class UNiiCoordinator(DataUpdateCoordinator):
     def event_occurred_callback(self, command: UNiiCommand, data: UNiiData):
         """Callback to be called by UNii library whenever an event occurs."""
 
+        # Reload the configuration on disconnect
+        if command in [
+            UNiiCommand.NORMAL_DISCONNECT,
+        ]:
+            self.hass.config_entries.async_schedule_reload(self.config_entry_id)
+            return
+
         if command in [
             UNiiCommand.CONNECTION_REQUEST_RESPONSE,
             UNiiCommand.POLL_ALIVE_RESPONSE,
-            UNiiCommand.NORMAL_DISCONNECT,
             UNiiCommand.EVENT_OCCURRED,
             UNiiCommand.INPUT_STATUS_CHANGED,
             UNiiCommand.RESPONSE_REQUEST_SECTION_STATUS,
@@ -141,7 +148,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
 
     # Setup coordinator
-    coordinator = UNiiCoordinator(hass, unii)
+    coordinator = UNiiCoordinator(hass, unii, entry.entry_id)
 
     # Fetch initial data so we have data when entities subscribe
     await coordinator.async_config_entry_first_refresh()
