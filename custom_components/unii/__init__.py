@@ -91,7 +91,7 @@ class UNiiCoordinator(DataUpdateCoordinator):
 
         # Reload the configuration on disconnect
         if command in [
-            UNiiCommand.NORMAL_DISCONNECT,
+            UNiiCommand.RELOAD_CONFIGURATION,
         ]:
             self.hass.config_entries.async_schedule_reload(self.config_entry_id)
             return
@@ -99,6 +99,7 @@ class UNiiCoordinator(DataUpdateCoordinator):
         if command in [
             UNiiCommand.CONNECTION_REQUEST_RESPONSE,
             UNiiCommand.POLL_ALIVE_RESPONSE,
+            UNiiCommand.NORMAL_DISCONNECT,
             UNiiCommand.EVENT_OCCURRED,
             UNiiCommand.INPUT_STATUS_CHANGED,
             UNiiCommand.RESPONSE_REQUEST_SECTION_STATUS,

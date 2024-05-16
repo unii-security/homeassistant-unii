@@ -20,7 +20,7 @@
     },
 	"device": {
 		"unii": {
-			"name": "Alphatronics {device_name} on {connection}"
+			"name": "{device_name}"
 		}
 	},
     "entity": {
