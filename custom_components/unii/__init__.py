@@ -8,12 +8,12 @@ from datetime import timedelta
 from typing import Any, Callable
 
 import homeassistant.helpers.config_validation as cv
+import homeassistant.helpers.device_registry as dr
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TYPE, Platform
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
-from homeassistant.helpers.device_registry import format_mac
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -52,6 +52,7 @@ class UNiiCoordinator(DataUpdateCoordinator):
         self.config_entry_id = config_entry_id
 
         identifiers = set()
+        connections = set()
         # Older versions of the firmware don't return a unique device id in the Equipment
         # Information, use the unique id of the connection (hostname) for all versions as an
         # identifier to prevent the creation of a new device after a firmware upgrade.
@@ -59,19 +60,24 @@ class UNiiCoordinator(DataUpdateCoordinator):
         if unii.equipment_information.device_id is not None:
             identifiers.add((DOMAIN, unii.equipment_information.device_id))
         if unii.equipment_information.mac_address is not None:
-            mac_address = format_mac(unii.equipment_information.mac_address)
+            mac_address = dr.format_mac(unii.equipment_information.mac_address)
             identifiers.add((DOMAIN, mac_address))
+            connections.add((dr.CONNECTION_NETWORK_MAC, mac_address))
 
         self.device_info = DeviceInfo(
+            configuration_url="https://unii-security.com/",
+            connections=connections,
             identifiers=identifiers,
+            manufacturer="Alphatronics",
+            model="UNii",
+            name=unii.equipment_information.device_name,
+            serial_number=unii.equipment_information.serial_number,
+            sw_version=str(unii.equipment_information.software_version),
             translation_key="unii",
             translation_placeholders={
                 "device_name": unii.equipment_information.device_name,
                 "connection": unii.connection.unique_id,
             },
-            manufacturer="Alphatronics",
-            sw_version=str(unii.equipment_information.software_version),
-            serial_number=unii.equipment_information.serial_number,
         )
 
         self.unii.add_event_occurred_callback(self.event_occurred_callback)

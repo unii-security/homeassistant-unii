@@ -59,10 +59,10 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             discovered_mac,
         )
 
-        self._async_abort_entries_match({CONF_HOST: discovered_ip})
+        # self._async_abort_entries_match({CONF_HOST: discovered_ip})
 
         await self.async_set_unique_id(format_mac(discovered_mac))
-        self._abort_if_unique_id_configured()
+        self._abort_if_unique_id_configured(updates={CONF_HOST: discovered_ip})
 
         _LOGGER.debug("Alphatronics UNii on %s is not yet configured", discovered_ip)
 
