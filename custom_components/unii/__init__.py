@@ -138,14 +138,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
 
     if (
-        unii.equipment_information.device_id is not None
+        unii.equipment_information.mac_address is not None
         and entry.unique_id == unii.connection.unique_id
     ):
         # The config entry uses the old unique id of the connection, the firmware has probably
         # been upgraded.
         _LOGGER.debug("Updating config entry")
         hass.config_entries.async_update_entry(
-            entry, unique_id=unii.equipment_information.device_id
+            entry, unique_id=unii.equipment_information.mac_address
         )
 
     # Setup coordinator
