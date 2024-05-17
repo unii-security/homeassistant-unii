@@ -11,7 +11,7 @@ import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components import dhcp
-from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TYPE
+from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TYPE, CONF_UNIQUE_ID
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import format_mac
@@ -56,10 +56,14 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         _LOGGER.debug(
             "DHCP discovery detected Alphatronics UNii on %s (%s)",
             discovered_ip,
-            discovered_mac,
+            format_mac(discovered_mac),
         )
 
-        # self._async_abort_entries_match({CONF_HOST: discovered_ip})
+        config_entry = await self.async_set_unique_id(discovered_ip)
+        if config_entry is not None and config_entry.domain == DOMAIN:
+            self.hass.config_entries.async_update_entry(
+                config_entry, unique_id=format_mac(discovered_mac)
+            )
 
         await self.async_set_unique_id(format_mac(discovered_mac))
         self._abort_if_unique_id_configured(updates={CONF_HOST: discovered_ip})
