@@ -38,7 +38,7 @@ class UNiiCoordinator(DataUpdateCoordinator):
     unii: UNii = None
     device_info: DeviceInfo = None
 
-    def __init__(self, hass: HomeAssistant, unii: UNii, config_entry_id: str):
+    def __init__(self, hass: HomeAssistant, unii: UNii, config_entry: ConfigEntry):
         """Initialize Alphatronics UNii Data Update Coordinator."""
 
         super().__init__(
@@ -49,20 +49,26 @@ class UNiiCoordinator(DataUpdateCoordinator):
         )
 
         self.unii = unii
-        self.config_entry_id = config_entry_id
+        self.config_entry_id = config_entry.entry_id
 
         identifiers = set()
         connections = set()
-        # Older versions of the firmware don't return a unique device id in the Equipment
-        # Information, use the unique id of the connection (hostname) for all versions as an
-        # identifier to prevent the creation of a new device after a firmware upgrade.
-        identifiers.add((DOMAIN, unii.connection.unique_id))
-        if unii.equipment_information.device_id is not None:
-            identifiers.add((DOMAIN, unii.equipment_information.device_id))
+        mac_address = None
         if unii.equipment_information.mac_address is not None:
             mac_address = dr.format_mac(unii.equipment_information.mac_address)
+        elif len(config_entry.unique_id) == 17 and config_entry.unique_id.count(":") == 5:
+            # Older versions of the firmware don't return the mac address in the Equipment
+            # Information. Test if the config entry uses a mac address as unique id and use that
+            # instead.
+            mac_address = dr.format_mac(config_entry.unique_id)
+
+        if mac_address is not None:
             identifiers.add((DOMAIN, mac_address))
             connections.add((dr.CONNECTION_NETWORK_MAC, mac_address))
+        else:
+            # If no mac address us know use the unique id of the connection (hostname) as an
+            # identifier.
+            identifiers.add((DOMAIN, unii.connection.unique_id))
 
         self.device_info = DeviceInfo(
             configuration_url="https://unii-security.com/",
@@ -155,7 +161,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
 
     # Setup coordinator
-    coordinator = UNiiCoordinator(hass, unii, entry.entry_id)
+    coordinator = UNiiCoordinator(hass, unii, entry)
 
     # Fetch initial data so we have data when entities subscribe
     await coordinator.async_config_entry_first_refresh()
