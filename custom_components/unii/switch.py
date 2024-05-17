@@ -48,7 +48,12 @@ async def async_setup_entry(
                         name=output.name,
                     )
                 entities.append(
-                    UNiiOutputSwitch(coordinator, entity_description, output.number)
+                    UNiiOutputSwitch(
+                        coordinator,
+                        entity_description,
+                        config_entry.entry_id,
+                        output.number,
+                    )
                 )
 
     async_add_entities(entities)
@@ -67,12 +72,13 @@ class UNiiSwitch(CoordinatorEntity, SwitchEntity):
         self,
         coordinator: UNiiCoordinator,
         entity_description: SwitchEntityDescription,
+        config_entry_id: str,
     ):
         """Initialize the switch."""
         super().__init__(coordinator, entity_description.key)
 
         self._attr_device_info = coordinator.device_info
-        self._attr_unique_id = f"{coordinator.unii.unique_id}-{entity_description.key}"
+        self._attr_unique_id = f"{config_entry_id}-{entity_description.key}"
         if entity_description.name not in [UNDEFINED, None]:
             self._attr_name = entity_description.name
 
@@ -123,10 +129,11 @@ class UNiiOutputSwitch(UNiiSwitch):
         self,
         coordinator: UNiiCoordinator,
         entity_description: SwitchEntityDescription,
+        config_entry_id: str,
         output_number: int,
     ):
         """Initialize the switch."""
-        super().__init__(coordinator, entity_description)
+        super().__init__(coordinator, entity_description, config_entry_id)
 
         self.output_number = output_number
         self._attr_extra_state_attributes = {"output_number": output_number}

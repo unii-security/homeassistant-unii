@@ -53,7 +53,12 @@ async def async_setup_entry(
                     name=unii_input.name,
                 )
             entities.append(
-                UNiiInputSensor(coordinator, entity_description, unii_input.number)
+                UNiiInputSensor(
+                    coordinator,
+                    entity_description,
+                    config_entry.entry_id,
+                    unii_input.number,
+                )
             )
 
     if UNiiFeature.ARM_SECTION not in coordinator.unii.features:
@@ -69,7 +74,12 @@ async def async_setup_entry(
                         name=section.name,
                     )
                 entities.append(
-                    UNiiSectionSensor(coordinator, entity_description, section.number)
+                    UNiiSectionSensor(
+                        coordinator,
+                        entity_description,
+                        config_entry.entry_id,
+                        section.number,
+                    )
                 )
 
     async_add_entities(entities)
@@ -87,12 +97,13 @@ class UNiiSensor(CoordinatorEntity, SensorEntity):
         self,
         coordinator: UNiiCoordinator,
         entity_description: SensorEntityDescription,
+        config_entry_id: str,
     ):
         """Initialize the sensor."""
         super().__init__(coordinator, entity_description.key)
 
         self._attr_device_info = coordinator.device_info
-        self._attr_unique_id = f"{coordinator.unii.unique_id}-{entity_description.key}"
+        self._attr_unique_id = f"{config_entry_id}-{entity_description.key}"
         if entity_description.name not in [UNDEFINED, None]:
             self._attr_name = entity_description.name
 
@@ -148,10 +159,11 @@ class UNiiInputSensor(UNiiSensor):
         self,
         coordinator: UNiiCoordinator,
         entity_description: SensorEntityDescription,
+        config_entry_id: str,
         input_number: int,
     ):
         """Initialize the sensor."""
-        super().__init__(coordinator, entity_description)
+        super().__init__(coordinator, entity_description, config_entry_id)
 
         self.input_number = input_number
         self._attr_extra_state_attributes = {"input_number": input_number}
@@ -275,16 +287,20 @@ class UNiiSectionSensor(UNiiSensor):
         self,
         coordinator: UNiiCoordinator,
         entity_description: SensorEntityDescription,
+        config_entry_id: str,
         section_number: int,
     ):
         """Initialize the sensor."""
-        super().__init__(coordinator, entity_description)
+        super().__init__(coordinator, entity_description, config_entry_id)
 
         self.section_number = section_number
         self._attr_extra_state_attributes = {"section_number": section_number}
         self._attr_translation_placeholders = {"section_number": section_number}
 
     def _handle_section_status(self, section: UNiiSectionStatusRecord):
+        if not section.active:
+            self._attr_available = False
+
         if section.armed_state == UNiiSectionArmedState.NOT_PROGRAMMED:
             self._attr_available = False
         elif section.armed_state == UNiiSectionArmedState.ARMED:

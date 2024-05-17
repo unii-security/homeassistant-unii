@@ -45,7 +45,12 @@ async def async_setup_entry(
                         name=section.name,
                     )
                 entities.append(
-                    UNiiArmSection(coordinator, entity_description, section.number)
+                    UNiiArmSection(
+                        coordinator,
+                        entity_description,
+                        config_entry.entry_id,
+                        section.number,
+                    )
                 )
 
     async_add_entities(entities)
@@ -65,12 +70,13 @@ class UNiiAlarmControlPanel(CoordinatorEntity, AlarmControlPanelEntity):
         self,
         coordinator: UNiiCoordinator,
         entity_description: AlarmControlPanelEntityDescription,
+        config_entry_id: str,
     ):
         """Initialize the sensor."""
         super().__init__(coordinator, entity_description.key)
 
         self._attr_device_info = coordinator.device_info
-        self._attr_unique_id = f"{coordinator.unii.unique_id}-{entity_description.key}"
+        self._attr_unique_id = f"{config_entry_id}-{entity_description.key}"
         if entity_description.name not in [UNDEFINED, None]:
             self._attr_name = entity_description.name
 
@@ -130,10 +136,11 @@ class UNiiArmSection(UNiiAlarmControlPanel):
         self,
         coordinator: UNiiCoordinator,
         entity_description: AlarmControlPanelEntityDescription,
+        config_entry_id: str,
         section_number: int,
     ):
         """Initialize the sensor."""
-        super().__init__(coordinator, entity_description)
+        super().__init__(coordinator, entity_description, config_entry_id)
 
         self.section_number = section_number
         self._attr_translation_placeholders = {"section_number": section_number}
