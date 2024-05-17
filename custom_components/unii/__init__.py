@@ -51,7 +51,7 @@ class UNiiCoordinator(DataUpdateCoordinator):
         self.unii = unii
         self.config_entry_id = config_entry.entry_id
 
-        identifiers = set()
+        identifiers = {(DOMAIN, config_entry.entry_id)}
         connections = set()
         mac_address = None
         if unii.equipment_information.mac_address is not None:
@@ -73,12 +73,6 @@ class UNiiCoordinator(DataUpdateCoordinator):
         if mac_address is not None:
             identifiers.add((DOMAIN, mac_address))
             connections.add((dr.CONNECTION_NETWORK_MAC, mac_address))
-
-        if config_entry.source == SOURCE_USER:
-            # User created config entries for devices with older firmware use the ip address as
-            # unique id. To prevent a new device to be created after a firmware update or updated
-            # unique id by dhcp auto discovery also add the hostname as identifier.
-            identifiers.add((DOMAIN, unii.connection.unique_id))
 
         self.device_info = DeviceInfo(
             configuration_url="https://unii-security.com/",
