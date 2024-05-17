@@ -162,19 +162,29 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # Wait a bit for the UNii to accept new connections later in the async_setup_entry.
                 await asyncio.sleep(1)
 
+                mac_address = None
                 if self._discovered_mac is not None:
-                    unique_id = format_mac(self._discovered_mac)
+                    mac_address = format_mac(self._discovered_mac)
                 elif unii.equipment_information.mac_address is not None:
                     # Newer versions of the UNii firmware provide the mac address in the Equipment
                     # Information.
-                    unique_id = format_mac(unii.equipment_information.mac_address)
+                    mac_address = format_mac(unii.equipment_information.mac_address)
+
+                if mac_address is not None:
+                    # Use the mac address as unique config id.
+                    await self.async_set_unique_id(format_mac(mac_address))
+                    self._abort_if_unique_id_configured(
+                        updates={
+                            CONF_HOST: host,
+                            CONF_PORT: port,
+                            CONF_SHARED_KEY: shared_key.hex(),
+                        }
+                    )
                 else:
                     # Fallback to the unique id of the connection (hostname) if the firmware does
                     # not provide a mac address.
-                    unique_id = unii.connection.unique_id
-
-                await self.async_set_unique_id(unique_id)
-                self._abort_if_unique_id_configured()
+                    await self.async_set_unique_id(unii.connection.unique_id)
+                    self._abort_if_unique_id_configured()
 
                 title = f"Alphatronics {unii.equipment_information.device_name}"
                 data = {
