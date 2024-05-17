@@ -10,7 +10,7 @@ from typing import Any, Callable
 import homeassistant.helpers.config_validation as cv
 import homeassistant.helpers.device_registry as dr
 import voluptuous as vol
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import SOURCE_DHCP, SOURCE_USER, ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TYPE, Platform
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
@@ -56,18 +56,28 @@ class UNiiCoordinator(DataUpdateCoordinator):
         mac_address = None
         if unii.equipment_information.mac_address is not None:
             mac_address = dr.format_mac(unii.equipment_information.mac_address)
-        elif len(config_entry.unique_id) == 17 and config_entry.unique_id.count(":") == 5:
+        elif config_entry.source == SOURCE_DHCP:
             # Older versions of the firmware don't return the mac address in the Equipment
-            # Information. Test if the config entry uses a mac address as unique id and use that
-            # instead.
+            # Information. Test if the config entry is created by dhcp auto discovery and use that
+            # mac address instead.
+            mac_address = dr.format_mac(config_entry.unique_id)
+        elif (
+            config_entry.source == SOURCE_USER
+            and len(config_entry.unique_id) == 17
+            and config_entry.unique_id.count(":") == 5
+        ):
+            # User created config entries for devices with older firmware can also be updated to by
+            # dhcp auto discovery to use the mac address as unique id. If so use that mac address.
             mac_address = dr.format_mac(config_entry.unique_id)
 
         if mac_address is not None:
             identifiers.add((DOMAIN, mac_address))
             connections.add((dr.CONNECTION_NETWORK_MAC, mac_address))
-        else:
-            # If no mac address us know use the unique id of the connection (hostname) as an
-            # identifier.
+
+        if config_entry.source == SOURCE_USER:
+            # User created config entries for devices with older firmware use the ip address as
+            # unique id. To prevent a new device to be created after a firmware update or updated
+            # unique id by dhcp auto discovery also add the hostname as identifier.
             identifiers.add((DOMAIN, unii.connection.unique_id))
 
         self.device_info = DeviceInfo(
