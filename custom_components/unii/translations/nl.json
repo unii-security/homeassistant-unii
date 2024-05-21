@@ -39,7 +39,7 @@
     			"name": "Input {input_number}",
     			"state": {
     				"clear": "Gesloten",
-    				"alarm": "Alarm",
+    				"alarm": "Open",
     				"tamper": "Sabotage",
     				"masking": "Maskeer",
     				"bypassed": "Geblokkeerd"
