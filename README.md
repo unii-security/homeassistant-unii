@@ -1,8 +1,12 @@
-# Home Assistant integration for Alphatronics UNii intrusion and access control system
+# Home Assistant integration for Alphatronics UNii
+
+![logo](https://raw.githubusercontent.com/unii-security/homeassistant-unii/main/logo.png)
 
 ## Introduction
 
 The UNii is a modular intrusion and access control system that is designed, developed and manufactured by Alphatronics, the Netherlands. This innovative solution is distributed and supported via the professional (security) installer and wholesalers.
+
+==This integration is still in beta and subject to change. We're looking forward to your feedback.==
 
 ## Features
 
