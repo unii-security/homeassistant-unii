@@ -20,7 +20,7 @@ Extra features (arming/disarming, (un)bypassing, outputs and event handling) are
 
 Tested with the UNii 32, 128 and 512. No additional UNii license needed.
 
-It is recomended to use the latest possible firmware on your UNii to unlock the full potential of the UNii and this integration.
+It is recommended to use the latest possible firmware on your UNii to unlock the full potential of the UNii and this integration.
 
 ## Configuring the UNii
 
@@ -63,6 +63,10 @@ Or follow these instructions:
 - Restart Home Assistant
 
 ##  Adding a new Alphatronics UNii to Home Assistant
+
+If your UNii is on the same network as your Home Assistant server and is assigned an IP address using DHCP your UNii will most probably be automatically discovered by the integration.
+
+In case your UNii is not automatically discovered follow these instructions:
 
 - After restarting go to **Settings** then **Devices & Services**
 - Select **+ Add integration** and type in **UNii**
