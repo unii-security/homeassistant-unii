@@ -152,7 +152,7 @@ class UNiiInputSensor(UNiiSensor):
     """UNii Sensor for inputs."""
 
     _attr_device_class = SensorDeviceClass.ENUM
-    _attr_options = ["clear", "alarm", "tamper", "masking", "bypassed"]
+    _attr_options = ["clear", "open", "tamper", "masking", "bypassed"]
     _attr_translation_key = "input"
 
     def __init__(
@@ -192,7 +192,7 @@ class UNiiInputSensor(UNiiSensor):
             elif input_status.bypassed is True:
                 self._attr_native_value = "bypassed"
             elif input_status.status == UNiiInputState.ALARM:
-                self._attr_native_value = "alarm"
+                self._attr_native_value = "open"
             elif input_status.status == UNiiInputState.TAMPER:
                 self._attr_native_value = "tamper"
             elif input_status.status == UNiiInputState.MASKING:
