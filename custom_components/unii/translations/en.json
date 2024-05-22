@@ -39,7 +39,7 @@
     			"name": "Input {input_number}",
     			"state": {
     				"clear": "Closed",
-    				"alarm": "Alarm",
+    				"alarm": "Open",
     				"tamper": "Tamper",
     				"masking": "Masking",
     				"bypassed": "Bypassed"
