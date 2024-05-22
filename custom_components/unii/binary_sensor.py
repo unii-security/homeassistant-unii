@@ -202,9 +202,6 @@ class UNiiInputBinarySensor(UNiiBinarySensor):
             if input_status.status == UNiiInputState.INPUT_OK:
                 self._attr_is_on = False
                 self._attr_extra_state_attributes["alarm_type"] = "none"
-            elif input_status.bypassed is True:
-                self._attr_is_on = True
-                self._attr_extra_state_attributes["alarm_type"] = "none"
             elif input_status.status == UNiiInputState.ALARM:
                 self._attr_is_on = True
                 self._attr_extra_state_attributes["alarm_type"] = "open"

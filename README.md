@@ -4,7 +4,7 @@ The UNii is a modular intrusion and access control system that is designed, deve
 
 
 ## Features
-* Status inputs (clear, alarm, tamper, masking, bypassed)
+* Status inputs (clear, alarm, tamper, masking)
 * Status sections (armed, disarmed, alarm) 
 * Connection status UNii panel
 

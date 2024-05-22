@@ -41,8 +41,7 @@
     				"clear": "Closed",
     				"open": "Open",
     				"tamper": "Tamper",
-    				"masking": "Masking",
-    				"bypassed": "Bypassed"
+    				"masking": "Masking"
     			}
     		},
     		"section": {
