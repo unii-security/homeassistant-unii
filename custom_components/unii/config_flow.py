@@ -15,9 +15,9 @@ from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TYPE
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import format_mac
+from unii import DEFAULT_PORT, UNiiLocal
 
 from . import CONF_SHARED_KEY, CONF_TYPE_LOCAL, DOMAIN
-from .unii import DEFAULT_PORT, UNiiLocal
 
 _LOGGER: Final = logging.getLogger(__name__)
 

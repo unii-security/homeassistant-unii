@@ -14,9 +14,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-
-from . import DOMAIN, UNiiCoordinator
-from .unii import (
+from unii import (
     UNiiCommand,
     UNiiFeature,
     UNiiInputState,
@@ -25,6 +23,8 @@ from .unii import (
     UNiiSectionStatusRecord,
     UNiiSensorType,
 )
+
+from . import DOMAIN, UNiiCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 

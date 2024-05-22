@@ -16,9 +16,9 @@ from homeassistant.core import CALLBACK_TYPE, HomeAssistant, ServiceCall, callba
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from unii import UNii, UNiiCommand, UNiiData, UNiiLocal
 
 from .const import CONF_SHARED_KEY, CONF_TYPE_LOCAL, DOMAIN
-from .unii import UNii, UNiiCommand, UNiiData, UNiiLocal
 
 _LOGGER = logging.getLogger(__name__)
 

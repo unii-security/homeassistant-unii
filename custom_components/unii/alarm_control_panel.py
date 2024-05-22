@@ -16,9 +16,9 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from unii import UNiiCommand, UNiiFeature, UNiiSection, UNiiSectionArmedState
 
 from . import DOMAIN, UNiiCoordinator
-from .unii import UNiiCommand, UNiiFeature, UNiiSection, UNiiSectionArmedState
 
 _LOGGER = logging.getLogger(__name__)
 
