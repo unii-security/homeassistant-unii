@@ -31,6 +31,8 @@ In the UNii API configuration the following options need to be set:
 - Input update interval: 0s to have to fastest input response type. (Only for firmware version 2.17.x and above)
 - API version: UNii.
 
+  After making changes to the UNii configuration the integration needs to be reloaded manualy in Home Assistant.
+
 ### Shared Key
 
 The UNii uses an encrypted connection with Home Assistant. The shared key has to be entered in the UNii (API settings) by the installer. Without installer access to the UNii end-users are **NOT** able to enter this key. Contact your installer if applicable.
