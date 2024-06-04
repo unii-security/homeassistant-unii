@@ -14,6 +14,8 @@ This integration is still in **beta** and **subject to change**. We're looking f
 - Status sections (armed, disarmed, alarm) 
 - Connection status UNii panel
 
+Section in alarm and fast input status update are only available for firmware version 2.17.x and above
+
 Extra features (arming/disarming, (un)bypassing, outputs and event handling) are added shortly.
 
 ## Hardware
@@ -76,5 +78,7 @@ In case your UNii is not automatically discovered follow these instructions:
 - Select **Submit**
 
 A new UNii integration and device will now be added to your Integrations view.
+
+All UNii trademarks, logos and brand names are registered and the property of Alphatronics BV
 
 [hacs]: https://hacs.xyz/
