@@ -22,7 +22,7 @@
     "unii"
   ],
   "requirements": [
-    "unii==1.0.0b2"
+    "unii==1.0.0b3"
   ],
-  "version": "1.0.0-beta.2"
+  "version": "1.0.0-beta.3"
 }
