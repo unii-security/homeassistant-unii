@@ -137,16 +137,10 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         shared_key = shared_key.strip()
         # Validate the shared key
         if shared_key == "":
-            errors[CONF_SHARED_KEY] = "invallid_shared_key"
+            errors[CONF_SHARED_KEY] = "invalid_shared_key"
         else:
-            if len(shared_key) > 16:
-                shared_key = shared_key[:16]
-
-            # If the shared key is shorter than 16 bytes it's padded with spaces (0x20).
-            while len(shared_key) < 16:
-                shared_key += str(0x20)
-
-            shared_key = shared_key.encode()
+            # string must be 16 characters, padded with spaces
+            shared_key = shared_key[:16].ljust(16, ' ')
 
             unii = UNiiLocal(host, port, shared_key)
 
@@ -177,7 +171,7 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         updates={
                             CONF_HOST: host,
                             CONF_PORT: port,
-                            CONF_SHARED_KEY: shared_key.hex(),
+                            CONF_SHARED_KEY: shared_key,
                         }
                     )
                 else:
@@ -191,7 +185,7 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_TYPE: CONF_TYPE_LOCAL,
                     CONF_HOST: host,
                     CONF_PORT: port,
-                    CONF_SHARED_KEY: shared_key.hex(),
+                    CONF_SHARED_KEY: shared_key,
                 }
                 return self.async_create_entry(title=title, data=data)
 
