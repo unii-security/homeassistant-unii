@@ -18,6 +18,9 @@ Section in alarm and fast input status update are only available for firmware ve
 
 Extra features (arming/disarming, (un)bypassing, outputs and event handling) are added shortly.
 
+## Update
+After installing the latest version of the integration the previous version must be removed and readded to fix encryption key issues.
+
 ## Hardware
 
 Tested with the UNii 32, 128 and 512. No additional UNii license needed.
