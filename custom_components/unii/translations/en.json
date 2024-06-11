@@ -5,7 +5,8 @@
         },
         "error": {
             "cannot_connect": "Failed to connect",
-            "unknown": "Unexpected error"
+            "unknown": "Unexpected error",
+            "invalid_shared_key": "Invalid shared key"
         },
         "step": {
             "setup_local": {
