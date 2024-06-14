@@ -31,7 +31,7 @@ In the UNii API configuration the following options need to be set:
 - Input update interval: 0s to have to fastest input response type. (Only for firmware version 2.17.x and above)
 - API version: UNii.
 
-After making changes to the UNii configuration the integration needs to be reloaded manualy in Home Assistant.
+After making changes to the UNii configuration the integration needs to be reloaded manually in Home Assistant.
 
 ### Shared Key
 
