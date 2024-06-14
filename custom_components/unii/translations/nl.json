@@ -1,7 +1,8 @@
 {
     "config": {
         "abort": {
-            "already_configured": "Apparaat is al geconfigueerd"
+            "already_configured": "Apparaat is al geconfigueerd",
+            "reauth_successful": "Herconfiguratie was succesvol"
         },
         "error": {
             "cannot_connect": "Kan geen verbinding maken",
@@ -16,7 +17,11 @@
                     "port": "Poort",
                     "shared_key": "Encryptie sleutel"
                 }
-            }
+            },
+		    "reauth_confirm": {
+		        "title": "Authenticatie is verlopen voor Alphatronics UNii",
+		        "description": "De Alphatronics UNii integratie moet opnieuw worden geauthenticeert"
+		    }
         }
     },
 	"device": {

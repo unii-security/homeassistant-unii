@@ -1,7 +1,8 @@
 {
     "config": {
         "abort": {
-            "already_configured": "Device is already configured"
+            "already_configured": "Device is already configured",
+            "reauth_successful": "Re-configuration was successful"
         },
         "error": {
             "cannot_connect": "Failed to connect",
@@ -16,7 +17,11 @@
                     "port": "Port",
                     "shared_key": "Shared key"
                 }
-            }
+            },
+		    "reauth_confirm": {
+		        "title": "Authentication expired for Alphatronics UNii",
+		        "description": "The Alphatronics UNii integration needs to re-authenticate"
+		    }
         }
     },
 	"device": {
