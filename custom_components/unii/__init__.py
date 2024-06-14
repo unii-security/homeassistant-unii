@@ -13,10 +13,14 @@ import voluptuous as vol
 from homeassistant.config_entries import SOURCE_DHCP, SOURCE_USER, ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TYPE, Platform
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, ServiceCall, callback
-from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
+from homeassistant.exceptions import (
+    ConfigEntryAuthFailed,
+    ConfigEntryError,
+    ConfigEntryNotReady,
+)
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from unii import UNii, UNiiCommand, UNiiData, UNiiLocal
+from unii import UNii, UNiiCommand, UNiiData, UNiiEncryptionError, UNiiLocal
 
 from .const import CONF_SHARED_KEY, CONF_TYPE_LOCAL, DOMAIN
 
@@ -49,6 +53,7 @@ class UNiiCoordinator(DataUpdateCoordinator):
         )
 
         self.unii = unii
+        self.config_entry = config_entry
         self.config_entry_id = config_entry.entry_id
 
         identifiers = {(DOMAIN, config_entry.entry_id)}
@@ -105,6 +110,10 @@ class UNiiCoordinator(DataUpdateCoordinator):
     def event_occurred_callback(self, command: UNiiCommand, data: UNiiData):
         """Callback to be called by UNii library whenever an event occurs."""
 
+        if command == UNiiCommand.REAUTHENTICATE:
+            self.config_entry.async_start_reauth(self.hass)
+            return
+
         # Reload the configuration on disconnect
         if command in [
             UNiiCommand.RELOAD_CONFIGURATION,
@@ -143,11 +152,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         port = entry.data[CONF_PORT]
         unii = UNiiLocal(host, port, entry.data[CONF_SHARED_KEY])
 
-        # Open the connection.
-        if not await unii.connect():
-            raise ConfigEntryNotReady(
-                f"Unable to connect to Alphatronics UNii on {unii.connection}"
-            )
+        try:
+            # Open the connection.
+            if not await unii.connect():
+                raise ConfigEntryNotReady(
+                    f"Unable to connect to Alphatronics UNii on {unii.connection}"
+                )
+        except UNiiEncryptionError as ex:
+            raise ConfigEntryAuthFailed(ex) from ex
     else:
         raise ConfigEntryError(
             f"Config type {conf_type} not supported for Alphatronics UNii"

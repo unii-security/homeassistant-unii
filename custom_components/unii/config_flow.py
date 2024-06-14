@@ -11,11 +11,12 @@ import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components import dhcp
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TYPE
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import format_mac
-from unii import DEFAULT_PORT, UNiiLocal
+from unii import DEFAULT_PORT, UNiiEncryptionError, UNiiLocal
 
 from . import CONF_SHARED_KEY, CONF_TYPE_LOCAL, DOMAIN
 
@@ -35,6 +36,8 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     _discovered_ip: str | None = None
     _discovered_mac: str | None = None
 
+    _reauth_entry: ConfigEntry | None = None
+
     LOCAL_SCHEMA: Final = vol.Schema(
         {
             vol.Required(CONF_HOST): str,
@@ -47,6 +50,7 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required(CONF_SHARED_KEY): str,
         }
     )
+    REAUTH_SCHEMA = DISCOVERED_SCHEMA
 
     async def async_step_dhcp(self, discovery_info: dhcp.DhcpServiceInfo) -> FlowResult:
         """Handle DHCP discovery."""
@@ -118,6 +122,11 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 step_id="setup_local",
                 data_schema=self.DISCOVERED_SCHEMA,
             )
+        if user_input is None and self._reauth_entry is not None:
+            return self.async_show_form(
+                step_id="setup_local",
+                data_schema=self.REAUTH_SCHEMA,
+            )
         if user_input is None:
             return self.async_show_form(
                 step_id="setup_local",
@@ -129,32 +138,56 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if self._discovered_ip is not None:
             host = self._discovered_ip
             port = DEFAULT_PORT
+        elif self._reauth_entry is not None:
+            host = self._reauth_entry.data[CONF_HOST]
+            port = self._reauth_entry.data[CONF_PORT]
         else:
             host = user_input.get(CONF_HOST)
             port = user_input.get(CONF_PORT, DEFAULT_PORT)
 
         shared_key = user_input.get(CONF_SHARED_KEY, "")
-        shared_key = shared_key.strip()
+        # shared_key = shared_key.strip()
         # Validate the shared key
         if shared_key == "":
             errors[CONF_SHARED_KEY] = "invalid_shared_key"
         else:
-            # string must be 16 characters, padded with spaces
-            shared_key = shared_key[:16].ljust(16, ' ')
+            # String must be 16 characters, padded with spaces.
+            shared_key = shared_key[:16].ljust(16, " ")
+            _LOGGER.debug('Shared key: "%s"', shared_key)
+
+            shared_key = shared_key.encode()
 
             unii = UNiiLocal(host, port, shared_key)
 
             # Test if we can connect to the device.
-            if not await unii.connect():
-                errors["base"] = "cannot_connect"
-                _LOGGER.error(
-                    "Unable to connect to Alphatronics UNii on %s", unii.connection
-                )
-            else:
+            can_connect = False
+            try:
+                can_connect = await unii.test_connection()
+                if not can_connect:
+                    errors["base"] = "cannot_connect"
+                    _LOGGER.error(
+                        "Unable to connect to Alphatronics UNii on %s", unii.connection
+                    )
+            except UNiiEncryptionError:
+                errors[CONF_SHARED_KEY] = "invalid_shared_key"
+
+            if can_connect:
                 await unii.disconnect()
 
                 # Wait a bit for the UNii to accept new connections later in the async_setup_entry.
                 await asyncio.sleep(1)
+
+                # If reauthenticating only the existing configuration needs to updated with the
+                # new shared key.
+                if self._reauth_entry is not None:
+                    return self.async_update_reload_and_abort(
+                        self._reauth_entry,
+                        data={
+                            CONF_HOST: host,
+                            CONF_PORT: port,
+                            CONF_SHARED_KEY: shared_key.hex(),
+                        },
+                    )
 
                 mac_address = None
                 if self._discovered_mac is not None:
@@ -171,7 +204,7 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         updates={
                             CONF_HOST: host,
                             CONF_PORT: port,
-                            CONF_SHARED_KEY: shared_key,
+                            CONF_SHARED_KEY: shared_key.hex(),
                         }
                     )
                 else:
@@ -185,13 +218,17 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_TYPE: CONF_TYPE_LOCAL,
                     CONF_HOST: host,
                     CONF_PORT: port,
-                    CONF_SHARED_KEY: shared_key,
+                    CONF_SHARED_KEY: shared_key.hex(),
                 }
                 return self.async_create_entry(title=title, data=data)
 
         if self._discovered_mac is not None:
             data_schema = self.add_suggested_values_to_schema(
                 self.DISCOVERED_SCHEMA, user_input
+            )
+        elif self._reauth_entry is not None:
+            data_schema = self.add_suggested_values_to_schema(
+                self.REAUTH_SCHEMA, user_input
             )
         else:
             data_schema = self.add_suggested_values_to_schema(
@@ -203,3 +240,22 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=data_schema,
             errors=errors,
         )
+
+    async def async_step_reauth(self, user_input=None):
+        """Perform reauth upon an API authentication error."""
+        self._reauth_entry = self.hass.config_entries.async_get_entry(
+            self.context["entry_id"]
+        )
+        _LOGGER.debug(
+            "Reauthentication needed for Alphatronics UNii on %s", self._reauth_entry
+        )
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(self, user_input=None):
+        """Dialog that informs the user that reauth is required."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="reauth_confirm",
+                data_schema=vol.Schema({}),
+            )
+        return await self.async_step_user()
