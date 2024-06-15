@@ -278,7 +278,7 @@ class UNiiSectionSensor(UNiiSensor):
     """UNii Sensor for sections."""
 
     _attr_device_class = SensorDeviceClass.ENUM
-    _attr_options = ["armed", "disarmed", "alarm"]
+    _attr_options = ["armed", "disarmed", "alarm", "exit_timer", "entry_timer"]
     _attr_translation_key = "section"
 
     def __init__(
@@ -299,17 +299,24 @@ class UNiiSectionSensor(UNiiSensor):
         if not section.active:
             self._attr_available = False
 
-        if section.armed_state == UNiiSectionArmedState.NOT_PROGRAMMED:
-            self._attr_available = False
-        elif section.armed_state == UNiiSectionArmedState.ARMED:
-            self._attr_native_value = "armed"
-            self._attr_icon = "mdi:lock"
-        elif section.armed_state == UNiiSectionArmedState.DISARMED:
-            self._attr_native_value = "disarmed"
-            self._attr_icon = "mdi:lock-open-variant"
-        elif section.armed_state == UNiiSectionArmedState.ALARM:
-            self._attr_native_value = "alarm"
-            self._attr_icon = "mdi:lock"
+        match section.armed_state:
+            case  UNiiSectionArmedState.NOT_PROGRAMMED:
+                self._attr_available = False
+            case UNiiSectionArmedState.ARMED:
+                self._attr_native_value = "armed"
+                self._attr_icon = "mdi:lock"
+            case UNiiSectionArmedState.DISARMED:
+                self._attr_native_value = "disarmed"
+                self._attr_icon = "mdi:lock-open-variant"
+            case UNiiSectionArmedState.ALARM:
+                self._attr_native_value = "alarm"
+                self._attr_icon = "mdi:lock"
+            case UNiiSectionArmedState.EXIT_TIMER:
+                self._attr_native_value = "exit_timer"
+                self._attr_icon = "mdi:timer-lock"
+            case UNiiSectionArmedState.ENTRY_TIMER:
+                self._attr_native_value = "entry_timer"
+                self._attr_icon = "mdi:timer-lock-open"
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()

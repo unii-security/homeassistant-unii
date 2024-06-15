@@ -55,7 +55,9 @@
 	    		"state": {
 		    		"armed": "Ingeschakeld",
 		    		"disarmed": "Uitgeschakeld",
-		    		"alarm": "Alarm"
+		    		"alarm": "Alarm",
+		    		"exit_timer": "Uitlooptimer Actief",
+		    		"entry_timer": "Inlooptimer Actief"
 	    		}
     		}
     	}

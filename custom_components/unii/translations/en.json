@@ -55,7 +55,9 @@
 	    		"state": {
 		    		"armed": "Armed",
 		    		"disarmed": "Disarmed",
-		    		"alarm": "Alarm"
+		    		"alarm": "Alarm",
+		    		"exit_timer": "Exit Timer Active",
+		    		"entry_timer": "Entry Timer Active"
 	    		}
     		}
     	}
