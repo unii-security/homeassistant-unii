@@ -10,9 +10,9 @@
     {
       "registered_devices": true
     },
-  	{
-  	  "macaddress": "94319B*"
-  	}
+    {
+      "macaddress": "94319B*"
+    }
   ],
   "documentation": "https://github.com/unii-security/homeassistant-unii",
   "integration_type": "device",
@@ -22,7 +22,7 @@
     "unii"
   ],
   "requirements": [
-    "unii==1.0.0b7"
+    "unii==1.0.0b8"
   ],
   "version": "1.0.0-beta.3"
 }
