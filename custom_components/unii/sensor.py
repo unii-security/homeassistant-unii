@@ -300,7 +300,7 @@ class UNiiSectionSensor(UNiiSensor):
             self._attr_available = False
 
         match section.armed_state:
-            case  UNiiSectionArmedState.NOT_PROGRAMMED:
+            case UNiiSectionArmedState.NOT_PROGRAMMED:
                 self._attr_available = False
             case UNiiSectionArmedState.ARMED:
                 self._attr_native_value = "armed"
