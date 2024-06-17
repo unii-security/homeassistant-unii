@@ -153,8 +153,6 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         else:
             # String must be 16 characters, padded with spaces.
             shared_key = shared_key[:16].ljust(16, " ")
-            _LOGGER.debug('Shared key: "%s"', shared_key)
-
             shared_key = shared_key.encode()
 
             unii = UNiiLocal(host, port, shared_key)
@@ -169,6 +167,7 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         "Unable to connect to Alphatronics UNii on %s", unii.connection
                     )
             except UNiiEncryptionError:
+                _LOGGER.debug("Invalid shared key: %s", shared_key)
                 errors[CONF_SHARED_KEY] = "invalid_shared_key"
 
             if can_connect:
