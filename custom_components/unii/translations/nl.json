@@ -32,7 +32,7 @@
     "entity": {
     	"alarm_control_panel": {
     		"section": {
-    			"name": "Section {section_number}"
+    			"name": "Sectie {section_number}"
 			}
     	},
     	"binary_sensor": {
@@ -42,7 +42,7 @@
     	},
     	"sensor": {
     		"input": {
-    			"name": "Input {input_number}",
+    			"name": "Ingang {input_number}",
     			"state": {
     				"clear": "Gesloten",
     				"open": "Open",
@@ -56,8 +56,8 @@
 		    		"armed": "Ingeschakeld",
 		    		"disarmed": "Uitgeschakeld",
 		    		"alarm": "Alarm",
-		    		"exit_timer": "Uitlooptimer Actief",
-		    		"entry_timer": "Inlooptimer Actief"
+		    		"exit_timer": "Uitlooptijd Actief",
+		    		"entry_timer": "Inlooptijd Actief"
 	    		}
     		}
     	}
