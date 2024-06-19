@@ -36,7 +36,10 @@ async def async_setup_entry(
     coordinator: UNiiCoordinator = hass.data[DOMAIN][config_entry.entry_id]
     entities = []
 
-    if UNiiFeature.BYPASS_INPUT in coordinator.unii.features:
+    if (
+        coordinator.can_write()
+        and UNiiFeature.BYPASS_INPUT in coordinator.unii.features
+    ):
         for _, input in coordinator.unii.inputs.items():
             if "status" in input and input.status not in [
                 None,
