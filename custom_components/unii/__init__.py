@@ -22,7 +22,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from unii import UNii, UNiiCommand, UNiiData, UNiiEncryptionError, UNiiLocal
 
-from .const import CONF_SHARED_KEY, CONF_TYPE_LOCAL, DOMAIN
+from .const import CONF_SHARED_KEY, CONF_TYPE_LOCAL, CONF_USER_CODE, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ PLATFORMS: list[Platform] = [
     Platform.ALARM_CONTROL_PANEL,
     Platform.BINARY_SENSOR,
     Platform.SENSOR,
-    # Platform.SWITCH,
+    Platform.SWITCH,
     # Platform.SELECT,
     # Platform.NUMBER,
 ]
@@ -42,7 +42,13 @@ class UNiiCoordinator(DataUpdateCoordinator):
     unii: UNii = None
     device_info: DeviceInfo = None
 
-    def __init__(self, hass: HomeAssistant, unii: UNii, config_entry: ConfigEntry):
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        unii: UNii,
+        config_entry: ConfigEntry,
+        user_code: str | None = None,
+    ):
         """Initialize Alphatronics UNii Data Update Coordinator."""
 
         super().__init__(
@@ -55,6 +61,7 @@ class UNiiCoordinator(DataUpdateCoordinator):
         self.unii = unii
         self.config_entry = config_entry
         self.config_entry_id = config_entry.entry_id
+        self.user_code = user_code
 
         identifiers = {(DOMAIN, config_entry.entry_id)}
         connections = set()
@@ -96,6 +103,9 @@ class UNiiCoordinator(DataUpdateCoordinator):
         )
 
         self.unii.add_event_occurred_callback(self.event_occurred_callback)
+
+    def set_user_code(self, user_code: str):
+        self.user_code = user_code
 
     async def async_disconnect(self):
         """
@@ -140,6 +150,12 @@ class UNiiCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Fetch data from Alphatronics UNii."""
 
+    async def bypass_input(self, number: int) -> bool:
+        return await self.unii.bypass_input(number, self.user_code)
+
+    async def unbypass_input(self, number: int) -> bool:
+        return await self.unii.unbypass_input(number, self.user_code)
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Alphatronics UNii from a config entry."""
@@ -177,7 +193,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
 
     # Setup coordinator
-    coordinator = UNiiCoordinator(hass, unii, entry)
+    user_code = entry.options.get(CONF_USER_CODE)
+    coordinator = UNiiCoordinator(hass, unii, entry, user_code)
 
     # Fetch initial data so we have data when entities subscribe
     await coordinator.async_config_entry_first_refresh()
@@ -185,6 +202,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    entry.async_on_unload(entry.add_update_listener(options_update_listener))
 
     await coordinator.async_request_refresh()
 
@@ -200,3 +219,12 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok
+
+
+async def options_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Handle options update."""
+    _LOGGER.debug("Configuration options updated, reloading UNii integration")
+    # await hass.config_entries.async_reload(entry.entry_id)
+    coordinator: UNiiCoordinator = hass.data[DOMAIN][entry.entry_id]
+
+    coordinator.set_user_code(entry.options.get(CONF_USER_CODE))

@@ -63,6 +63,14 @@
 		    		"entry_timer": "Inlooptijd Actief"
 	    		}
     		}
+    	},
+    	"switch": {
+    		"bypass_input": {
+    			"name": "Blokkeer Ingang {input_number}"
+    		},
+    		"bypass_input_name": {
+    			"name": "Blokkeer {input_name}"
+    		}
     	}
     }
 }
