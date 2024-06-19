@@ -27,6 +27,16 @@
 		    }
         }
     },
+	"options": {
+		"step": {
+			"init": {
+				"title": "UNii options",
+				"data": {
+					"user_code": "User code"
+				}
+			}
+		}
+	},
 	"device": {
 		"unii": {
 			"name": "{device_name}"
