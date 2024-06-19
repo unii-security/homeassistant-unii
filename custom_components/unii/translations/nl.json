@@ -16,6 +16,9 @@
                     "host": "Host",
                     "port": "Poort",
                     "shared_key": "Encryptie sleutel"
+                },
+                "data_description": {
+                    "shared_key": "Neem contact op met uw installateur om een ​​encryptie sleutel aan te vragen."
                 }
             },
 		    "reauth_confirm": {

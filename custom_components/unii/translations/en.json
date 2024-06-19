@@ -16,6 +16,9 @@
                     "host": "Host",
                     "port": "Port",
                     "shared_key": "Shared key"
+                },
+                "data_description": {
+                    "shared_key": "Contact your installer to aquire a shared key."
                 }
             },
 		    "reauth_confirm": {
