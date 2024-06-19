@@ -215,6 +215,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator: UNiiCoordinator = hass.data[DOMAIN][entry.entry_id]
     await coordinator.async_disconnect()
 
+    # Wait a bit for the UNii to accept new connections after an integration reload.
+    await asyncio.sleep(1)
+
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         hass.data[DOMAIN].pop(entry.entry_id)
 
