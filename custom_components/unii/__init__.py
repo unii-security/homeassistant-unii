@@ -107,6 +107,9 @@ class UNiiCoordinator(DataUpdateCoordinator):
     def set_user_code(self, user_code: str):
         self.user_code = user_code
 
+    def can_write(self) -> bool:
+        return self.user_code is not None
+
     async def async_disconnect(self):
         """
         Disconnect from UNii.
