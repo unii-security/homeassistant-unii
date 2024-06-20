@@ -34,6 +34,8 @@ PLATFORMS: list[Platform] = [
     # Platform.SELECT,
     # Platform.NUMBER,
 ]
+# These platforms need to be reloaded when switching between read-only and writable mode.
+RW_PLATFORMS: list[Platform] = [Platform.SWITCH]
 
 
 class UNiiCoordinator(DataUpdateCoordinator):
@@ -104,8 +106,22 @@ class UNiiCoordinator(DataUpdateCoordinator):
 
         self.unii.add_event_occurred_callback(self.event_occurred_callback)
 
-    def set_user_code(self, user_code: str):
+    async def set_user_code(self, user_code: str):
+        # If the configuration changes between read-only and writable the device needs to be
+        # reloaded to create/disable entities
+        reload = False
+        if (self.user_code is None) ^ (user_code is None):
+            reload = True
+
         self.user_code = user_code
+
+        if reload:
+            await self.hass.config_entries.async_unload_platforms(
+                self.config_entry, RW_PLATFORMS
+            )
+            await self.hass.config_entries.async_forward_entry_setups(
+                self.config_entry, RW_PLATFORMS
+            )
 
     def can_write(self) -> bool:
         return self.user_code is not None
@@ -218,19 +234,18 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator: UNiiCoordinator = hass.data[DOMAIN][entry.entry_id]
     await coordinator.async_disconnect()
 
-    # Wait a bit for the UNii to accept new connections after an integration reload.
-    await asyncio.sleep(1)
-
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         hass.data[DOMAIN].pop(entry.entry_id)
+
+    # Wait a bit for the UNii to accept new connections after an integration reload.
+    await asyncio.sleep(1)
 
     return unload_ok
 
 
 async def options_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Handle options update."""
-    _LOGGER.debug("Configuration options updated, reloading UNii integration")
-    # await hass.config_entries.async_reload(entry.entry_id)
+    _LOGGER.debug("Configuration options updated")
     coordinator: UNiiCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    coordinator.set_user_code(entry.options.get(CONF_USER_CODE))
+    await coordinator.set_user_code(entry.options.get(CONF_USER_CODE))

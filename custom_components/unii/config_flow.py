@@ -314,16 +314,7 @@ class UNiiOptionsFlowHandler(config_entries.OptionsFlow):
                     errors[CONF_USER_CODE] = "invalid_user_code"
 
             if not errors:
-                result = self.hass.config_entries.async_update_entry(
-                    entry=self.config_entry,
-                    options = {
-                        CONF_USER_CODE: None
-                    }
-                )
-                if result and user_code is None:
-                    self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
-                else:
-                    return self.async_create_entry(title="", data=user_input)
+                return self.async_create_entry(title="", data=user_input)
 
         if user_input is not None:
             data_schema = self.add_suggested_values_to_schema(
