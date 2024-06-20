@@ -11,15 +11,13 @@ This integration is still in **beta** and **subject to change**. We're looking f
 ## Features
 
 - Status inputs (clear, open, tamper, masking)
-- Status sections (armed, disarmed, alarm) 
+- (Un)bypassing inputs
+- Status sections (armed, disarmed, alarm, exit timer, entry timer) 
 - Connection status UNii panel
 
 Section in alarm and fast input status update are only available for firmware version 2.17.x and above
 
 Extra features (arming/disarming, (un)bypassing, outputs and event handling) are added shortly.
-
-## Update
-After installing the latest version of the integration the previous version must be removed and readded to fix encryption key issues.
 
 ## Hardware
 
@@ -69,7 +67,7 @@ Or follow these instructions:
 `config/custom_components/` directory of your Home Assistant installation
 - Restart Home Assistant
 
-##  Adding a new Alphatronics UNii to Home Assistant
+## Adding a new Alphatronics UNii to Home Assistant
 
 If your UNii is on the same network as your Home Assistant server and is assigned an IP address using DHCP your UNii will most probably be automatically discovered by the integration.
 
@@ -81,6 +79,15 @@ In case your UNii is not automatically discovered follow these instructions:
 - Select **Submit**
 
 A new UNii integration and device will now be added to your Integrations view.
+
+## Write access to the UNii
+
+By default the UNii integration is set to read only mode, only the status of your Unii will be displayed.
+To enable write access and be able to (un)bypass inputs set an user code in the UNii integration options by going to the UNii device and clicking **Configure**. By removing the user code the UNii integration is back in read only mode.
+
+It is recommended to use a dedicated user in your UNii which is assigned only those permissions that are needed for your scenarios.
+
+---
 
 All UNii trademarks, logos and brand names are registered and the property of Alphatronics BV
 
