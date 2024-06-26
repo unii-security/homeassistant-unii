@@ -80,6 +80,12 @@
     		},
     		"bypass_input_name": {
     			"name": "Bypass {input_name}"
+    		},
+    		"arm_section": {
+    			"name": "Arm Section {section_number}"
+    		},
+    		"arm_section_name": {
+    			"name": "Arm {section_name}"
     		}
     	}
     }
