@@ -61,26 +61,27 @@ async def async_setup_entry(
                 )
             )
 
-    if UNiiFeature.ARM_SECTION not in coordinator.unii.features:
-        for _, section in coordinator.unii.sections.items():
-            if section.active:
-                if section.name is None:
-                    entity_description = SensorEntityDescription(
-                        key=f"section{section.number}-enum",
-                    )
-                else:
-                    entity_description = SensorEntityDescription(
-                        key=f"section{section.number}-enum",
-                        name=section.name,
-                    )
-                entities.append(
-                    UNiiSectionSensor(
-                        coordinator,
-                        entity_description,
-                        config_entry.entry_id,
-                        section.number,
-                    )
-                )
+    # if UNiiFeature.ARM_SECTION not in coordinator.unii.features:
+    for section in (
+        section for section in coordinator.unii.sections.values() if section.active
+    ):
+        if section.name is None:
+            entity_description = SensorEntityDescription(
+                key=f"section{section.number}-enum",
+            )
+        else:
+            entity_description = SensorEntityDescription(
+                key=f"section{section.number}-enum",
+                name=section.name,
+            )
+        entities.append(
+            UNiiSectionSensor(
+                coordinator,
+                entity_description,
+                config_entry.entry_id,
+                section.number,
+            )
+        )
 
     async_add_entities(entities)
 
@@ -295,11 +296,11 @@ class UNiiSectionSensor(UNiiSensor):
         self._attr_extra_state_attributes = {"section_number": section_number}
         self._attr_translation_placeholders = {"section_number": section_number}
 
-    def _handle_section_status(self, section: UNiiSectionStatusRecord):
-        if not section.active:
+    def _handle_section_status(self, section_status: UNiiSectionStatusRecord):
+        if not section_status.active:
             self._attr_available = False
 
-        match section.armed_state:
+        match section_status.armed_state:
             case UNiiSectionArmedState.NOT_PROGRAMMED:
                 self._attr_available = False
             case UNiiSectionArmedState.ARMED:
@@ -322,8 +323,8 @@ class UNiiSectionSensor(UNiiSensor):
         await super().async_added_to_hass()
 
         if self.coordinator.unii.connected:
-            section = self.coordinator.unii.sections.get(self.section_number)
-            self._handle_section_status(section)
+            section_status = self.coordinator.unii.sections.get(self.section_number)
+            self._handle_section_status(section_status)
 
         self.async_write_ha_state()
 
