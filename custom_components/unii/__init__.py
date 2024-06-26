@@ -27,7 +27,7 @@ from .const import CONF_SHARED_KEY, CONF_TYPE_LOCAL, CONF_USER_CODE, DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [
-    Platform.ALARM_CONTROL_PANEL,
+    # Platform.ALARM_CONTROL_PANEL,
     Platform.BINARY_SENSOR,
     Platform.SENSOR,
     Platform.SWITCH,
@@ -174,6 +174,12 @@ class UNiiCoordinator(DataUpdateCoordinator):
 
     async def unbypass_input(self, number: int) -> bool:
         return await self.unii.unbypass_input(number, self.user_code)
+
+    async def arm_section(self, number: int) -> bool:
+        return await self.unii.arm_section(number, self.user_code)
+
+    async def disarm_section(self, number: int) -> bool:
+        return await self.unii.disarm_section(number, self.user_code)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

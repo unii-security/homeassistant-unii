@@ -19,8 +19,10 @@ from unii import (
     UNiiFeature,
     UNiiInputState,
     UNiiInputStatusRecord,
+    UNiiSectionArmedState,
     UNiiSensorType,
 )
+from unii.unii_command_data import UNiiSectionStatus, UNiiSectionStatusRecord
 
 from . import DOMAIN, UNiiCoordinator
 
@@ -40,30 +42,54 @@ async def async_setup_entry(
         coordinator.can_write()
         and UNiiFeature.BYPASS_INPUT in coordinator.unii.features
     ):
-        for _, input in coordinator.unii.inputs.items():
-            if "status" in input and input.status not in [
+        for _, uni_input in coordinator.unii.inputs.items():
+            if "status" in uni_input and uni_input.status not in [
                 None,
                 UNiiInputState.DISABLED,
             ]:
-                if input.name is None:
+                if uni_input.name is None:
                     entity_description = SwitchEntityDescription(
-                        key=f"input{input.number}-bypass",
+                        key=f"input{uni_input.number}-bypass",
                         device_class=SwitchDeviceClass.SWITCH,
                     )
                 else:
                     entity_description = SwitchEntityDescription(
-                        key=f"input{input.number}-bypass",
+                        key=f"input{uni_input.number}-bypass",
                         device_class=SwitchDeviceClass.SWITCH,
-                        name=input.name,
+                        name=uni_input.name,
                     )
                 entities.append(
                     UNiiBypassInputSwitch(
                         coordinator,
                         entity_description,
                         config_entry.entry_id,
-                        input.number,
+                        uni_input.number,
                     )
                 )
+
+    if coordinator.can_write() and UNiiFeature.ARM_SECTION in coordinator.unii.features:
+        for section in (
+            section for section in coordinator.unii.sections.values() if section.active
+        ):
+            if section.name is None:
+                entity_description = SwitchEntityDescription(
+                    key=f"section{section.number}-arm",
+                    device_class=SwitchDeviceClass.SWITCH,
+                )
+            else:
+                entity_description = SwitchEntityDescription(
+                    key=f"section{section.number}-arm",
+                    device_class=SwitchDeviceClass.SWITCH,
+                    name=section.name,
+                )
+            entities.append(
+                UNiiArmSectionSwitch(
+                    coordinator,
+                    entity_description,
+                    config_entry.entry_id,
+                    section.number,
+                )
+            )
 
     # if UNiiFeature.SET_OUTPUT in coordinator.unii.features:
     #     for _, output in coordinator.unii.outputs.items():
@@ -282,20 +308,116 @@ class UNiiBypassInputSwitch(UNiiSwitch):
         if await self.coordinator.bypass_input(self.input_number):
             self._attr_is_on = True
             self.async_write_ha_state()
-        # else:
-        #     self._attr_is_on = False
-        #
-        # self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs):
         """Unbypasses the input."""
         if await self.coordinator.unbypass_input(self.input_number):
             self._attr_is_on = False
             self.async_write_ha_state()
-        # else:
-        #     self._attr_is_on = True
-        #
-        # self.async_write_ha_state()
+
+
+class UNiiArmSectionSwitch(UNiiSwitch):
+    """UNii Switch for (dis)arming sections."""
+
+    _attr_translation_key = "arm_section"
+
+    def __init__(
+        self,
+        coordinator: UNiiCoordinator,
+        entity_description: SwitchEntityDescription,
+        config_entry_id: str,
+        section_number: int,
+    ):
+        """Initialize the switch."""
+        super().__init__(coordinator, entity_description, config_entry_id)
+
+        self.section_number = section_number
+        self._attr_extra_state_attributes = {"section_number": section_number}
+        self._attr_translation_placeholders = {"section_number": section_number}
+        if entity_description.name not in [UNDEFINED, None]:
+            self._attr_translation_key += "_name"
+            self._attr_translation_placeholders = {
+                "section_name": entity_description.name
+            }
+
+    def _handle_section_status(self, section_status: UNiiSectionStatusRecord):
+        if not section_status.active:
+            self._attr_available = False
+
+        match section_status.armed_state:
+            case UNiiSectionArmedState.NOT_PROGRAMMED:
+                self._attr_available = False
+            case UNiiSectionArmedState.ARMED:
+                self._attr_is_on = True
+                self._attr_extra_state_attributes["status"] = "armed"
+                self._attr_icon = "mdi:lock"
+            case UNiiSectionArmedState.DISARMED:
+                self._attr_is_on = False
+                self._attr_extra_state_attributes["status"] = "disarmed"
+                self._attr_icon = "mdi:lock-open-variant"
+            case UNiiSectionArmedState.ALARM:
+                self._attr_is_on = True
+                self._attr_extra_state_attributes["status"] = "alarm"
+                self._attr_icon = "mdi:lock"
+            case UNiiSectionArmedState.EXIT_TIMER:
+                self._attr_is_on = True
+                self._attr_extra_state_attributes["status"] = "exit_timer"
+                self._attr_icon = "mdi:timer-lock"
+            case UNiiSectionArmedState.ENTRY_TIMER:
+                self._attr_is_on = True
+                self._attr_extra_state_attributes["status"] = "entry_timer"
+                self._attr_icon = "mdi:timer-lock-open"
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+
+        if self.coordinator.unii.connected:
+            section_status: UNiiInputStatusRecord = self.coordinator.unii.sections.get(
+                self.section_number
+            )
+
+            self._handle_section_status(section_status)
+
+        self.async_write_ha_state()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+
+        super()._handle_coordinator_update()
+
+        if self.coordinator.data is None:
+            return
+
+        command = self.coordinator.data.get("command")
+        data = self.coordinator.data.get("data")
+
+        if (
+            command == UNiiCommand.EVENT_OCCURRED
+            and self.section_number in data.sections
+        ):
+            # ToDo
+            pass
+        elif (
+            command == UNiiCommand.RESPONSE_REQUEST_SECTION_STATUS
+            and self.section_number in data
+        ):
+            section_status: UNiiSectionStatusRecord = data.get(self.section_number)
+            self._handle_section_status(section_status)
+
+        self.async_write_ha_state()
+
+    async def async_turn_on(self, **kwargs):
+        """Bypasses the ."""
+        if await self.coordinator.arm_section(self.section_number):
+            self._attr_is_on = True
+            self.async_write_ha_state()
+
+    async def async_turn_off(self, **kwargs):
+        """Unbypasses the ."""
+        if await self.coordinator.disarm_section(self.section_number):
+            self._attr_is_on = False
+            self.async_write_ha_state()
 
 
 class UNiiOutputSwitch(UNiiSwitch):
