@@ -13,14 +13,26 @@ from homeassistant import config_entries
 from homeassistant.components import dhcp
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TYPE
+from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import format_mac
+from homeassistant.helpers.selector import (
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
+    TextSelector,
+    TextSelectorConfig,
+    TextSelectorType,
+)
 from unii import DEFAULT_PORT, UNiiEncryptionError, UNiiLocal
 
-from . import CONF_SHARED_KEY, CONF_TYPE_LOCAL, DOMAIN
+from .const import CONF_SHARED_KEY, CONF_TYPE_LOCAL, CONF_USER_CODE, DOMAIN
 
 _LOGGER: Final = logging.getLogger(__name__)
+
+_VALIDATE_SHARED_KEY = cv.matches_regex(r"^.{1,16}$")
+_VALIDATE_USER_CODE = cv.matches_regex(r"^\d{4,6}$")
 
 
 class CannotConnect(HomeAssistantError):
@@ -40,14 +52,16 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     LOCAL_SCHEMA: Final = vol.Schema(
         {
-            vol.Required(CONF_HOST): str,
-            vol.Required(CONF_PORT, default=DEFAULT_PORT): cv.port,
-            vol.Required(CONF_SHARED_KEY): str,
+            vol.Required(CONF_HOST): TextSelector(),
+            vol.Required(CONF_PORT, default=DEFAULT_PORT): NumberSelector(
+                NumberSelectorConfig(min=1, max=65535, mode=NumberSelectorMode.BOX)
+            ),
+            vol.Required(CONF_SHARED_KEY): TextSelector(),
         }
     )
     DISCOVERED_SCHEMA: Final = vol.Schema(
         {
-            vol.Required(CONF_SHARED_KEY): str,
+            vol.Required(CONF_SHARED_KEY): TextSelector(),
         }
     )
     REAUTH_SCHEMA = DISCOVERED_SCHEMA
@@ -145,23 +159,29 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             host = user_input.get(CONF_HOST)
             port = user_input.get(CONF_PORT, DEFAULT_PORT)
 
-        shared_key = user_input.get(CONF_SHARED_KEY, "")
-        # shared_key = shared_key.strip()
-        # Validate the shared key
-        if shared_key == "":
-            errors[CONF_SHARED_KEY] = "invalid_shared_key"
-        else:
+        shared_key = user_input.get(CONF_SHARED_KEY)
+        # Validate the shared key.
+        try:
+            _VALIDATE_SHARED_KEY(shared_key)
+
             # String must be 16 characters, padded with spaces.
             shared_key = shared_key[:16].ljust(16, " ")
             shared_key = shared_key.encode()
+        except vol.Invalid:
+            errors[CONF_SHARED_KEY] = "invalid_shared_key"
 
+        if not errors:
             unii = UNiiLocal(host, port, shared_key)
 
             # Test if we can connect to the device.
-            can_connect = False
             try:
-                can_connect = await unii.test_connection()
-                if not can_connect:
+                if await unii.test_connection():
+                    await unii.disconnect()
+
+                    # Wait a bit for the UNii to accept new connections later in the
+                    # async_setup_entry.
+                    await asyncio.sleep(1)
+                else:
                     errors["base"] = "cannot_connect"
                     _LOGGER.error(
                         "Unable to connect to Alphatronics UNii on %s", unii.connection
@@ -170,56 +190,51 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 _LOGGER.debug("Invalid shared key: %s", shared_key)
                 errors[CONF_SHARED_KEY] = "invalid_shared_key"
 
-            if can_connect:
-                await unii.disconnect()
+        if not errors:
+            # If reauthenticating only the existing configuration needs to updated with the
+            # new shared key.
+            if self._reauth_entry is not None:
+                return self.async_update_reload_and_abort(
+                    self._reauth_entry,
+                    data={
+                        CONF_HOST: host,
+                        CONF_PORT: port,
+                        CONF_SHARED_KEY: shared_key.hex(),
+                    },
+                )
 
-                # Wait a bit for the UNii to accept new connections later in the async_setup_entry.
-                await asyncio.sleep(1)
+            mac_address = None
+            if self._discovered_mac is not None:
+                mac_address = format_mac(self._discovered_mac)
+            elif unii.equipment_information.mac_address is not None:
+                # Newer versions of the UNii firmware provide the mac address in the Equipment
+                # Information.
+                mac_address = format_mac(unii.equipment_information.mac_address)
 
-                # If reauthenticating only the existing configuration needs to updated with the
-                # new shared key.
-                if self._reauth_entry is not None:
-                    return self.async_update_reload_and_abort(
-                        self._reauth_entry,
-                        data={
-                            CONF_HOST: host,
-                            CONF_PORT: port,
-                            CONF_SHARED_KEY: shared_key.hex(),
-                        },
-                    )
+            if mac_address is not None:
+                # Use the mac address as unique config id.
+                await self.async_set_unique_id(format_mac(mac_address))
+                self._abort_if_unique_id_configured(
+                    updates={
+                        CONF_HOST: host,
+                        CONF_PORT: port,
+                        CONF_SHARED_KEY: shared_key.hex(),
+                    }
+                )
+            else:
+                # Fallback to the unique id of the connection (hostname) if the firmware does
+                # not provide a mac address.
+                await self.async_set_unique_id(unii.connection.unique_id)
+                self._abort_if_unique_id_configured()
 
-                mac_address = None
-                if self._discovered_mac is not None:
-                    mac_address = format_mac(self._discovered_mac)
-                elif unii.equipment_information.mac_address is not None:
-                    # Newer versions of the UNii firmware provide the mac address in the Equipment
-                    # Information.
-                    mac_address = format_mac(unii.equipment_information.mac_address)
-
-                if mac_address is not None:
-                    # Use the mac address as unique config id.
-                    await self.async_set_unique_id(format_mac(mac_address))
-                    self._abort_if_unique_id_configured(
-                        updates={
-                            CONF_HOST: host,
-                            CONF_PORT: port,
-                            CONF_SHARED_KEY: shared_key.hex(),
-                        }
-                    )
-                else:
-                    # Fallback to the unique id of the connection (hostname) if the firmware does
-                    # not provide a mac address.
-                    await self.async_set_unique_id(unii.connection.unique_id)
-                    self._abort_if_unique_id_configured()
-
-                title = f"Alphatronics {unii.equipment_information.device_name}"
-                data = {
-                    CONF_TYPE: CONF_TYPE_LOCAL,
-                    CONF_HOST: host,
-                    CONF_PORT: port,
-                    CONF_SHARED_KEY: shared_key.hex(),
-                }
-                return self.async_create_entry(title=title, data=data)
+            title = f"Alphatronics {unii.equipment_information.device_name}"
+            data = {
+                CONF_TYPE: CONF_TYPE_LOCAL,
+                CONF_HOST: host,
+                CONF_PORT: port,
+                CONF_SHARED_KEY: shared_key.hex(),
+            }
+            return self.async_create_entry(title=title, data=data)
 
         if self._discovered_mac is not None:
             data_schema = self.add_suggested_values_to_schema(
@@ -258,3 +273,60 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 data_schema=vol.Schema({}),
             )
         return await self.async_step_user()
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> config_entries.OptionsFlow:
+        """Create the options flow."""
+        return UNiiOptionsFlowHandler(config_entry)
+
+
+class UNiiOptionsFlowHandler(config_entries.OptionsFlow):
+    """Handle the options flow for Alphatronics UNii."""
+
+    OPTIONS_SCHEMA = vol.Schema(
+        {
+            vol.Optional(CONF_USER_CODE): TextSelector(),
+        }
+    )
+
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        """Initialize options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Manage the options."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            self.OPTIONS_SCHEMA(user_input)
+
+            user_code = user_input.get(CONF_USER_CODE)
+            if user_code is not None:
+                # Validate the user code.
+                try:
+                    _VALIDATE_USER_CODE(user_code)
+                except vol.Invalid:
+                    errors[CONF_USER_CODE] = "invalid_user_code"
+
+            if not errors:
+                return self.async_create_entry(title="", data=user_input)
+
+        if user_input is not None:
+            data_schema = self.add_suggested_values_to_schema(
+                self.OPTIONS_SCHEMA, user_input
+            )
+        else:
+            data_schema = self.add_suggested_values_to_schema(
+                self.OPTIONS_SCHEMA, self.config_entry.options
+            )
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=data_schema,
+            errors=errors,
+        )

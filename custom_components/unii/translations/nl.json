@@ -27,6 +27,16 @@
 		    }
         }
     },
+	"options": {
+		"step": {
+			"init": {
+				"title": "UNii instellingen",
+				"data": {
+					"user_code": "User code"
+				}
+			}
+		}
+	},
 	"device": {
 		"unii": {
 			"name": "{device_name}"
@@ -62,6 +72,20 @@
 		    		"exit_timer": "Uitlooptijd Actief",
 		    		"entry_timer": "Inlooptijd Actief"
 	    		}
+    		}
+    	},
+    	"switch": {
+    		"bypass_input": {
+    			"name": "Blokkeer Ingang {input_number}"
+    		},
+    		"bypass_input_name": {
+    			"name": "Blokkeer {input_name}"
+    		},
+    		"arm_section": {
+    			"name": "Inschakelen Sectie {section_number}"
+    		},
+    		"arm_section_name": {
+    			"name": "Inschakelen {section_name}"
     		}
     	}
     }

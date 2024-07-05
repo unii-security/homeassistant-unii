@@ -12,11 +12,26 @@ from homeassistant.components.alarm_control_panel import (
 )
 from homeassistant.components.alarm_control_panel.const import CodeFormat
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import (
+    STATE_ALARM_ARMED_AWAY,
+    STATE_ALARM_ARMING,
+    STATE_ALARM_DISARMED,
+    STATE_ALARM_DISARMING,
+    STATE_ALARM_TRIGGERED,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from unii import UNiiCommand, UNiiFeature, UNiiSection, UNiiSectionArmedState
+from unii import (
+    UNiiCommand,
+    UNiiFeature,
+    UNiiInputState,
+    UNiiInputStatusRecord,
+    UNiiSection,
+    UNiiSectionArmedState,
+    UNiiSectionStatusRecord,
+)
 
 from . import DOMAIN, UNiiCoordinator
 
@@ -32,26 +47,51 @@ async def async_setup_entry(
     coordinator: UNiiCoordinator = hass.data[DOMAIN][config_entry.entry_id]
     entities = []
 
-    if UNiiFeature.ARM_SECTION in coordinator.unii.features:
-        for _, section in coordinator.unii.sections.items():
-            if section.active:
-                if section.name is None:
-                    entity_description = AlarmControlPanelEntityDescription(
-                        key=f"section{section.number}-arm",
-                    )
-                else:
-                    entity_description = AlarmControlPanelEntityDescription(
-                        key=f"section{section.number}-arm",
-                        name=section.name,
-                    )
-                entities.append(
-                    UNiiArmSection(
-                        coordinator,
-                        entity_description,
-                        config_entry.entry_id,
-                        section.number,
-                    )
+    if coordinator.can_write() and UNiiFeature.ARM_SECTION in coordinator.unii.features:
+        for section in (
+            section for section in coordinator.unii.sections.values() if section.active
+        ):
+            if section.name is None:
+                entity_description = AlarmControlPanelEntityDescription(
+                    key=f"section{section.number}-arm",
                 )
+            else:
+                entity_description = AlarmControlPanelEntityDescription(
+                    key=f"section{section.number}-arm",
+                    name=section.name,
+                )
+            entities.append(
+                UNiiArmSection(
+                    coordinator,
+                    entity_description,
+                    config_entry.entry_id,
+                    section.number,
+                )
+            )
+
+    # if UNiiFeature.BYPASS_INPUT in coordinator.unii.features:
+    #     for _, unii_input in coordinator.unii.inputs.items():
+    #         if "status" in unii_input and unii_input.status not in [
+    #             None,
+    #             UNiiInputState.DISABLED,
+    #         ]:
+    #             if unii_input.name is None:
+    #                 entity_description = AlarmControlPanelEntityDescription(
+    #                     key=f"input{unii_input.number}-bypass",
+    #                 )
+    #             else:
+    #                 entity_description = AlarmControlPanelEntityDescription(
+    #                     key=f"input{unii_input.number}-bypass",
+    #                     name=f"Bypass {unii_input.name}",
+    #                 )
+    #             entities.append(
+    #                 UNiiBypassInput(
+    #                     coordinator,
+    #                     entity_description,
+    #                     config_entry.entry_id,
+    #                     unii_input.number,
+    #                 )
+    #             )
 
     async_add_entities(entities)
 
@@ -123,7 +163,7 @@ class UNiiAlarmControlPanel(CoordinatorEntity, AlarmControlPanelEntity):
 
 
 class UNiiArmSection(UNiiAlarmControlPanel):
-    """UNii Alarm Control Panel to for a Section."""
+    """UNii Alarm Control Panel to arm a Section."""
 
     _attr_translation_key = "section"
 
@@ -145,18 +185,23 @@ class UNiiArmSection(UNiiAlarmControlPanel):
         self.section_number = section_number
         self._attr_translation_placeholders = {"section_number": section_number}
 
-    def _handle_section(self, section: UNiiSection):
-        if section.armed_state == UNiiSectionArmedState.NOT_PROGRAMMED:
+    def _handle_section_status(self, section_status: UNiiSection):
+        if not section_status.active:
             self._attr_available = False
-        elif section.armed_state in [
-            UNiiSectionArmedState.ARMED,
-            UNiiSectionArmedState.ALARM,
-        ]:
-            self._attr_is_disarmed = False
-            self._attr_state = "armed"
-        elif section.armed_state == UNiiSectionArmedState.DISARMED:
-            self._attr_is_disarmed = True
-            self._attr_state = "disarmed"
+
+        match section_status.armed_state:
+            case UNiiSectionArmedState.NOT_PROGRAMMED:
+                self._attr_available = False
+            case UNiiSectionArmedState.ARMED:
+                self._attr_state = STATE_ALARM_ARMED_AWAY
+            case UNiiSectionArmedState.DISARMED:
+                self._attr_state = STATE_ALARM_DISARMED
+            case UNiiSectionArmedState.ALARM:
+                self._attr_state = STATE_ALARM_TRIGGERED
+            case UNiiSectionArmedState.EXIT_TIMER:
+                self._attr_state = STATE_ALARM_ARMING
+            case UNiiSectionArmedState.ENTRY_TIMER:
+                self._attr_state = STATE_ALARM_ARMED_AWAY
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
@@ -165,7 +210,7 @@ class UNiiArmSection(UNiiAlarmControlPanel):
             self._attr_available = False
         else:
             section = self.coordinator.unii.sections.get(self.section_number)
-            self._handle_section(section)
+            self._handle_section_status(section)
 
         self.async_write_ha_state()
 
@@ -181,34 +226,122 @@ class UNiiArmSection(UNiiAlarmControlPanel):
         command = self.coordinator.data.get("command")
         data = self.coordinator.data.get("data")
 
-        if command == UNiiCommand.RESPONSE_REQUEST_SECTION_STATUS:
-            section = self.coordinator.unii.sections.get(self.section_number)
-            self._handle_section(section)
+        if (
+            command == UNiiCommand.EVENT_OCCURRED
+            and self.section_number in data.sections
+        ):
+            # ToDo
+            pass
+        elif (
+            command == UNiiCommand.RESPONSE_REQUEST_SECTION_STATUS
+            and self.section_number in data
+        ):
+            section_status: UNiiSectionStatusRecord = data.get(self.section_number)
+            self._handle_section_status(section_status)
 
         self.async_write_ha_state()
 
     async def async_alarm_arm_away(self, code: str):
         """Send arm away command."""
-        self._attr_is_arming = True
+        self._attr_state = STATE_ALARM_ARMING
         self.async_write_ha_state()
 
         if await self.coordinator.unii.arm_section(self.section_number, code):
-            self._attr_is_disarmed = False
-            self._attr_is_arming = False
-        else:
-            self._attr_is_arming = False
+            self._attr_state = STATE_ALARM_ARMED_AWAY
 
         self.async_write_ha_state()
 
     async def async_alarm_disarm(self, code: str):
         """Send disarm command."""
-        self._attr_is_disarming = True
+        self._attr_state = STATE_ALARM_DISARMING
         self.async_write_ha_state()
 
         if await self.coordinator.unii.disarm_section(self.section_number, code):
-            self._attr_is_disarmed = True
-            self._attr_is_disarming = False
-        else:
-            self._attr_is_disarming = False
+            self._attr_state = STATE_ALARM_DISARMED
 
         self.async_write_ha_state()
+
+
+class UNiiBypassInput(UNiiAlarmControlPanel):
+    """UNii Alarm Control Panel to bypass inputs."""
+
+    _attr_translation_key = "bypass_input"
+
+    _attr_code_format = CodeFormat.NUMBER
+    _attr_supported_features: AlarmControlPanelEntityFeature = (
+        AlarmControlPanelEntityFeature.ARM_CUSTOM_BYPASS
+    )
+
+    def __init__(
+        self,
+        coordinator: UNiiCoordinator,
+        entity_description: AlarmControlPanelEntityDescription,
+        config_entry_id: str,
+        input_number: int,
+    ):
+        """Initialize the sensor."""
+        super().__init__(coordinator, entity_description, config_entry_id)
+
+        self.input_number = input_number
+        self._attr_translation_placeholders = {"input_number": input_number}
+
+    def _handle_input_status(self, input_status: UNiiInputStatusRecord):
+        # if "input_type" in input_status:
+        #     self._attr_extra_state_attributes["input_type"] = str(
+        #         input_status.input_type
+        #     )
+        # if "sensor_type" in input_status:
+        #     self._attr_extra_state_attributes["sensor_type"] = str(
+        #         input_status.sensor_type
+        #     )
+
+        if input_status.bypassed:
+            self._attr_state = "armed_custom_bypass"
+        else:
+            self._attr_state = "armed"
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+
+        if self.coordinator.unii.connected:
+            input_status: UNiiInputStatusRecord = self.coordinator.unii.inputs.get(
+                self.input_number
+            )
+
+            self._handle_input_status(input_status)
+
+        self.async_write_ha_state()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+
+        super()._handle_coordinator_update()
+
+        if self.coordinator.data is None:
+            return
+
+        command = self.coordinator.data.get("command")
+        data = self.coordinator.data.get("data")
+
+        if (
+            command == UNiiCommand.EVENT_OCCURRED
+            and data.input_number == self.input_number
+        ):
+            # ToDo
+            pass
+        elif command == UNiiCommand.INPUT_STATUS_CHANGED and self.input_number in data:
+            input_status: UNiiInputStatusRecord = data.get(self.input_number)
+            self._handle_input_status(input_status)
+        elif (
+            command == UNiiCommand.INPUT_STATUS_UPDATE
+            and data.number == self.input_number
+        ):
+            self._handle_input_status(data)
+        else:
+            return
+
+        self.async_write_ha_state()
+
+    async def async_alarm_arm_custom_bypass(self, code=None) -> None:
+        """Send arm custom bypass command."""

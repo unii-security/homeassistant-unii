@@ -27,6 +27,16 @@
 		    }
         }
     },
+	"options": {
+		"step": {
+			"init": {
+				"title": "UNii options",
+				"data": {
+					"user_code": "User code"
+				}
+			}
+		}
+	},
 	"device": {
 		"unii": {
 			"name": "{device_name}"
@@ -62,6 +72,20 @@
 		    		"exit_timer": "Exit Timer Active",
 		    		"entry_timer": "Entry Timer Active"
 	    		}
+    		}
+    	},
+    	"switch": {
+    		"bypass_input": {
+    			"name": "Bypass Input {input_number}"
+    		},
+    		"bypass_input_name": {
+    			"name": "Bypass {input_name}"
+    		},
+    		"arm_section": {
+    			"name": "Arm Section {section_number}"
+    		},
+    		"arm_section_name": {
+    			"name": "Arm {section_name}"
     		}
     	}
     }
