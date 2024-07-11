@@ -12,12 +12,11 @@ This integration is still in **beta** and **subject to change**. We're looking f
 
 - Status inputs (clear, open, tamper, masking)
 - (Un)bypassing inputs
-- Status sections (armed, disarmed, alarm, exit timer, entry timer) 
+- Status sections (armed, disarmed, alarm, exit timer, entry timer)
+- Arm and disarm sections
 - Connection status UNii panel
 
 Section in alarm and fast input status update are only available for firmware version 2.17.x and above
-
-Extra features (arming/disarming, (un)bypassing, outputs and event handling) are added shortly.
 
 ## Hardware
 
@@ -83,7 +82,7 @@ A new UNii integration and device will now be added to your Integrations view.
 ## Write access to the UNii
 
 By default the UNii integration is set to read only mode, only the status of your Unii will be displayed.
-To enable write access and be able to (un)bypass inputs set an user code in the UNii integration options by going to the UNii device and clicking **Configure**. By removing the user code the UNii integration is back in read only mode.
+To enable write access and be able to (un)bypass inputs or arm and disarm set an user code in the UNii integration options by going to the UNii device and clicking **Configure**. By removing the user code the UNii integration is back in read only mode.
 
 It is recommended to use a dedicated user in your UNii which is assigned only those permissions that are needed for your scenarios.
 
