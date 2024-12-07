@@ -9,7 +9,7 @@ from typing import Any, Final
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-from homeassistant import config_entries
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow
 from homeassistant.components import dhcp
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TYPE
@@ -40,7 +40,7 @@ class CannotConnect(HomeAssistantError):
     """Error to indicate we cannot connect."""
 
 
-class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class UNiiConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Alphatronics UNii."""
 
     VERSION = 1
@@ -277,13 +277,13 @@ class UNiiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(
-        config_entry: config_entries.ConfigEntry,
-    ) -> config_entries.OptionsFlow:
+        config_entry: ConfigEntry,
+    ) -> OptionsFlow:
         """Create the options flow."""
-        return UNiiOptionsFlowHandler(config_entry)
+        return UNiiOptionsFlowHandler()
 
 
-class UNiiOptionsFlowHandler(config_entries.OptionsFlow):
+class UNiiOptionsFlowHandler(OptionsFlow):
     """Handle the options flow for Alphatronics UNii."""
 
     OPTIONS_SCHEMA = vol.Schema(
@@ -291,10 +291,6 @@ class UNiiOptionsFlowHandler(config_entries.OptionsFlow):
             vol.Optional(CONF_USER_CODE): TextSelector(),
         }
     )
-
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
