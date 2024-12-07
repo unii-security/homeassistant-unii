@@ -180,8 +180,6 @@ class UNiiInputBinarySensor(UNiiBinarySensor):
     """UNii Binary Sensor for inputs."""
     _attr_translation_key = "input"
 
-    _attr_extra_state_attributes = {"alarm_type": "none"}
-
     def __init__(
         self,
         coordinator: UNiiCoordinator,
@@ -194,6 +192,7 @@ class UNiiInputBinarySensor(UNiiBinarySensor):
 
         self.input_number = input_number
         self._attr_translation_placeholders = {"input_number": input_number}
+        self._attr_extra_state_attributes = {"alarm_type": "none"}
 
     def _handle_input_status(self, input_status: UNiiInputStatusRecord):
         if input_status.status == UNiiInputState.DISABLED or input_status.supervision:
