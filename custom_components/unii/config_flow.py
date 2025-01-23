@@ -10,8 +10,6 @@ from typing import Any, Final
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow
-from homeassistant.components import dhcp
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TYPE
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
@@ -25,6 +23,7 @@ from homeassistant.helpers.selector import (
     TextSelectorConfig,
     TextSelectorType,
 )
+from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
 from unii import DEFAULT_PORT, UNiiEncryptionError, UNiiLocal
 
 from .const import CONF_SHARED_KEY, CONF_TYPE_LOCAL, CONF_USER_CODE, DOMAIN
@@ -61,7 +60,7 @@ class UNiiConfigFlow(ConfigFlow, domain=DOMAIN):
     )
     REAUTH_SCHEMA = DISCOVERED_SCHEMA
 
-    async def async_step_dhcp(self, discovery_info: dhcp.DhcpServiceInfo) -> FlowResult:
+    async def async_step_dhcp(self, discovery_info: DhcpServiceInfo) -> FlowResult:
         """Handle DHCP discovery."""
         discovered_ip = discovery_info.ip
         discovered_mac = discovery_info.macaddress
