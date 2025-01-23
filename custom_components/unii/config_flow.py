@@ -35,11 +35,6 @@ _VALIDATE_SHARED_KEY = cv.matches_regex(r"^.{1,16}$")
 _VALIDATE_USER_CODE = cv.matches_regex(r"^\d{4,6}$")
 
 
-class CannotConnect(HomeAssistantError):
-    # pylint: disable=too-few-public-methods
-    """Error to indicate we cannot connect."""
-
-
 class UNiiConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Alphatronics UNii."""
 
