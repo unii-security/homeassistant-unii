@@ -7,12 +7,10 @@ import logging
 from datetime import timedelta
 from typing import Any, Callable
 
-import homeassistant.helpers.config_validation as cv
 import homeassistant.helpers.device_registry as dr
-import voluptuous as vol
 from homeassistant.config_entries import SOURCE_DHCP, SOURCE_USER, ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TYPE, Platform
-from homeassistant.core import CALLBACK_TYPE, HomeAssistant, ServiceCall, callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import (
     ConfigEntryAuthFailed,
     ConfigEntryError,
