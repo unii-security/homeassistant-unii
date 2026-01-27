@@ -44,7 +44,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the UNii lock."""
-    coordinator: UNiiCoordinator = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator: UNiiCoordinator = config_entry.runtime_data
     entities = []
 
     if coordinator.can_write() and UNiiFeature.ARM_SECTION in coordinator.unii.features:

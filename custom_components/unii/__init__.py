@@ -222,7 +222,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Fetch initial data so we have data when entities subscribe
     await coordinator.async_config_entry_first_refresh()
 
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
+    entry.runtime_data = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
@@ -235,21 +235,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    coordinator: UNiiCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: UNiiCoordinator = entry.runtime_data
     await coordinator.async_disconnect()
-
-    if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        hass.data[DOMAIN].pop(entry.entry_id)
 
     # Wait a bit for the UNii to accept new connections after an integration reload.
     await asyncio.sleep(1)
 
-    return unload_ok
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
 async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Handle options update."""
     _LOGGER.debug("Configuration options updated")
-    coordinator: UNiiCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: UNiiCoordinator = entry.runtime_data
 
     await coordinator.set_user_code(entry.options.get(CONF_USER_CODE))

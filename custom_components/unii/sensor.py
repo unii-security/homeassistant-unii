@@ -35,7 +35,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the UNii sensor."""
-    coordinator: UNiiCoordinator = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator: UNiiCoordinator = config_entry.runtime_data
     entities = []
 
     for _, unii_input in coordinator.unii.inputs.items():
