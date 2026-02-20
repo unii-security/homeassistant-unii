@@ -1,4 +1,4 @@
-"""The Alhpatronics UNii integration for Home Assistant"""
+"""The Alphatronics UNii integration for Home Assistant"""
 
 from __future__ import annotations
 
