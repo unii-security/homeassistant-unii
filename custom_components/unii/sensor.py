@@ -14,7 +14,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from unii import (
+from .vendor.unii import (
     UNiiCommand,
     UNiiFeature,
     UNiiInputState,
@@ -354,3 +354,4 @@ class UNiiSectionSensor(UNiiSensor):
             self._handle_section_status(section_status)
 
         self.async_write_ha_state()
+

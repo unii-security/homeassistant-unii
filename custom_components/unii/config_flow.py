@@ -24,7 +24,7 @@ from homeassistant.helpers.selector import (
     TextSelectorType,
 )
 from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
-from unii import DEFAULT_PORT, UNiiEncryptionError, UNiiLocal
+from .vendor.unii import DEFAULT_PORT, UNiiEncryptionError, UNiiLocal
 
 from .const import CONF_SHARED_KEY, CONF_TYPE_LOCAL, CONF_USER_CODE, DOMAIN
 
@@ -320,3 +320,4 @@ class UNiiOptionsFlowHandler(OptionsFlow):
             data_schema=data_schema,
             errors=errors,
         )
+

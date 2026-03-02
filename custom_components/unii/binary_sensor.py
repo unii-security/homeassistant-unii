@@ -15,7 +15,7 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from unii import UNiiCommand, UNiiInputState, UNiiInputStatusRecord
+from .vendor.unii import UNiiCommand, UNiiInputState, UNiiInputStatusRecord
 
 from . import DOMAIN, UNiiCoordinator
 
@@ -257,3 +257,4 @@ class UNiiInputBinarySensor(UNiiBinarySensor):
             return
 
         self.async_write_ha_state()
+

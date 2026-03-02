@@ -18,11 +18,26 @@ from homeassistant.exceptions import (
 )
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from unii import UNii, UNiiCommand, UNiiData, UNiiEncryptionError, UNiiLocal
+from .vendor.unii import UNii, UNiiCommand, UNiiData, UNiiEncryptionError, UNiiLocal
+from .vendor.unii.unii_command_data import UNiiResultCode
 
 from .const import CONF_SHARED_KEY, CONF_TYPE_LOCAL, CONF_USER_CODE, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _vendor_sanity_check() -> None:
+    """Verify vendored enum conversion used by the UNii protocol."""
+    try:
+        if UNiiResultCode(b"\x00\x00") is not UNiiResultCode.OK:
+            raise RuntimeError("UNiiResultCode bytes conversion failed")
+    except Exception as err:
+        raise RuntimeError(
+            "Vendored UNii library failed Python 3.14 compatibility sanity check"
+        ) from err
+
+
+_vendor_sanity_check()
 
 PLATFORMS: list[Platform] = [
     # Platform.ALARM_CONTROL_PANEL,
@@ -250,3 +265,4 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     coordinator: UNiiCoordinator = entry.runtime_data
 
     await coordinator.set_user_code(entry.options.get(CONF_USER_CODE))
+

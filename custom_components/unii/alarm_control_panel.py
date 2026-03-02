@@ -23,7 +23,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from unii import (
+from .vendor.unii import (
     UNiiCommand,
     UNiiFeature,
     UNiiInputState,
@@ -345,3 +345,4 @@ class UNiiBypassInput(UNiiAlarmControlPanel):
 
     async def async_alarm_arm_custom_bypass(self, code=None) -> None:
         """Send arm custom bypass command."""
+

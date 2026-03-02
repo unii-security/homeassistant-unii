@@ -22,7 +22,8 @@
     "unii"
   ],
   "requirements": [
-    "unii==1.0.0"
+    "pycryptodome>=3.6.6",
+    "semver>=3.0.2"
   ],
   "version": "1.0.1"
 }

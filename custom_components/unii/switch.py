@@ -14,7 +14,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from unii import (
+from .vendor.unii import (
     UNiiCommand,
     UNiiFeature,
     UNiiInputState,
@@ -22,7 +22,7 @@ from unii import (
     UNiiSectionArmedState,
     UNiiSensorType,
 )
-from unii.unii_command_data import UNiiSectionStatus, UNiiSectionStatusRecord
+from .vendor.unii.unii_command_data import UNiiSectionStatus, UNiiSectionStatusRecord
 
 from . import DOMAIN, UNiiCoordinator
 
@@ -484,3 +484,4 @@ class UNiiOutputSwitch(UNiiSwitch):
     #         return
     #
     #     self.async_write_ha_state()
+
