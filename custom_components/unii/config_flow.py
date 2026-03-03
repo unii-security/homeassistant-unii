@@ -13,7 +13,6 @@ from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TYPE
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import format_mac
 from homeassistant.helpers.selector import (
     NumberSelector,
@@ -185,14 +184,12 @@ class UNiiConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors[CONF_SHARED_KEY] = "invalid_shared_key"
 
         if not errors:
-            # If reauthenticating only the existing configuration needs to updated with the
+            # If reauthenticating only the existing configuration needs to be updated with the
             # new shared key.
             if self._reauth_entry is not None:
                 return self.async_update_reload_and_abort(
                     self._reauth_entry,
-                    data={
-                        CONF_HOST: host,
-                        CONF_PORT: port,
+                    data_updates={
                         CONF_SHARED_KEY: shared_key.hex(),
                     },
                 )
