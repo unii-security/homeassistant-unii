@@ -147,7 +147,7 @@ class UNiiAlarmControlPanel(CoordinatorEntity, AlarmControlPanelEntity):
             self._attr_available = False
         elif self.coordinator.data is not None:
             command = self.coordinator.data.get("command")
-    
+
             if command == UNiiCommand.NORMAL_DISCONNECT:
                 self._attr_available = False
             elif command in [

@@ -2,6 +2,7 @@
 """
 Creates Switch entities for the UNii Home Assistant integration.
 """
+
 import logging
 
 from homeassistant.components.switch import (
