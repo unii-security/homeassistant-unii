@@ -1,7 +1,7 @@
 {
     "config": {
         "abort": {
-            "already_configured": "Apparaat is al geconfigueerd",
+            "already_configured": "Apparaat is al geconfigureerd",
             "reauth_successful": "Herconfiguratie was succesvol"
         },
         "error": {
@@ -23,7 +23,7 @@
             },
 		    "reauth_confirm": {
 		        "title": "Authenticatie is verlopen voor Alphatronics UNii",
-		        "description": "De Alphatronics UNii integratie moet opnieuw worden geauthenticeert"
+		        "description": "De Alphatronics UNii integratie moet opnieuw worden geauthenticeerd"
 		    }
         }
     },
@@ -32,7 +32,7 @@
 			"init": {
 				"title": "UNii instellingen",
 				"data": {
-					"user_code": "User code"
+          "user_code": "Gebruikerscode"
 				}
 			}
 		}
