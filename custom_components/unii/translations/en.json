@@ -18,7 +18,7 @@
                     "shared_key": "Shared key"
                 },
                 "data_description": {
-                    "shared_key": "Contact your installer to aquire a shared key."
+                    "shared_key": "Contact your installer to acquire a shared key."
                 }
             },
 		    "reauth_confirm": {
