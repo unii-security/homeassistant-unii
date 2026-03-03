@@ -168,8 +168,7 @@ class UNiiSwitch(CoordinatorEntity, SwitchEntity):
 
         if not self.coordinator.unii.connected:
             self._attr_available = False
-
-        if self.coordinator.data is not None:
+        elif self.coordinator.data is not None:
             command = self.coordinator.data.get("command")
 
             if command == UNiiCommand.NORMAL_DISCONNECT:

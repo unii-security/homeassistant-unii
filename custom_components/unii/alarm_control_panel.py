@@ -145,19 +145,16 @@ class UNiiAlarmControlPanel(CoordinatorEntity, AlarmControlPanelEntity):
 
         if not self.coordinator.unii.connected:
             self._attr_available = False
-
-        if self.coordinator.data is None:
-            return
-
-        command = self.coordinator.data.get("command")
-
-        if command == UNiiCommand.NORMAL_DISCONNECT:
-            self._attr_available = False
-        elif command in [
-            UNiiCommand.CONNECTION_REQUEST_RESPONSE,
-            UNiiCommand.POLL_ALIVE_RESPONSE,
-        ]:
-            self._attr_available = True
+        elif self.coordinator.data is not None:
+            command = self.coordinator.data.get("command")
+    
+            if command == UNiiCommand.NORMAL_DISCONNECT:
+                self._attr_available = False
+            elif command in [
+                UNiiCommand.CONNECTION_REQUEST_RESPONSE,
+                UNiiCommand.POLL_ALIVE_RESPONSE,
+            ]:
+                self._attr_available = True
 
         self.async_write_ha_state()
 
