@@ -9,10 +9,14 @@ from typing import Any, Final
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TYPE
 from homeassistant.core import callback
-from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.device_registry import format_mac
 from homeassistant.helpers.selector import (
     NumberSelector,
@@ -59,7 +63,9 @@ class UNiiConfigFlow(ConfigFlow, domain=DOMAIN):
     )
     REAUTH_SCHEMA = DISCOVERED_SCHEMA
 
-    async def async_step_dhcp(self, discovery_info: DhcpServiceInfo) -> FlowResult:
+    async def async_step_dhcp(
+        self, discovery_info: DhcpServiceInfo
+    ) -> ConfigFlowResult:
         """Handle DHCP discovery."""
         discovered_ip = discovery_info.ip
         discovered_mac = discovery_info.macaddress
@@ -102,7 +108,7 @@ class UNiiConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         # pylint: disable=unused-argument
         """Handle the initial step."""
         # Currently only supporting a local UNii
@@ -122,7 +128,7 @@ class UNiiConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def async_step_setup_local(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Handle the setup local."""
         if user_input is None and self._discovered_mac is not None:
             return self.async_show_form(
@@ -285,7 +291,7 @@ class UNiiOptionsFlowHandler(OptionsFlow):
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Manage the options."""
         errors: dict[str, str] = {}
 
